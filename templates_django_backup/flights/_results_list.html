@@ -1,0 +1,115 @@
+{% load flight_extras %}
+{% for f in flights %}
+<article class="flight-card" data-status="{{ f.status|status_label }}" data-airline="{{ f.airline_name }}" data-iata="{{ f.airline_iata }}" data-scope="{{ f.airline_scope|default:'both_domestic_intl' }}" data-fare-type="{{ f.fare_type|default:'regular' }}" data-price="{{ f.price|default:4999 }}" data-duration="{{ f.duration_minutes|default:150 }}" data-dep="{{ f.scheduled_departure|isotime }}" data-stops="{% if f.is_connecting %}1-stop{% else %}non-stop{% endif %}" data-class="{{ f.travel_class|default:'economy' }}">
+  <div class="fc-airline-header">
+    <div class="airline-brand">
+      <span class="airline-logo logo-{{ f.airline_iata|lower }}">{{ f.airline_iata|default:"✈" }}</span>
+      <div class="airline-meta">
+        <strong class="airline-name">{{ f.airline_name|default:"Airline unavailable" }}</strong>
+        <span class="flight-ident">{{ f.flight_number }}{% if f.aircraft %} · {{ f.aircraft }}{% endif %}</span>
+      </div>
+    </div>
+    <div class="header-tags">
+      {% if f.airline_scope == 'domestic_only' %}
+        <span class="scope-badge scope-regional" title="Strictly Domestic Regional (UDAN / Commuter)">Domestic Regional</span>
+      {% elif f.airline_scope == 'foreign' %}
+        <span class="scope-badge scope-foreign" title="Foreign Carrier (International Only under Cabotage Laws)">Foreign Carrier</span>
+      {% else %}
+        <span class="scope-badge scope-mainline" title="Mainline Carrier (Domestic &amp; Overseas Operations)">Mainline Carrier</span>
+      {% endif %}
+      <span class="class-badge class-{{ f.travel_class|default:'economy' }}">
+        {% if f.travel_class == 'premium_economy' %}Premium Economy
+        {% elif f.travel_class == 'business' %}Business Class
+        {% elif f.travel_class == 'first' %}First Class
+        {% else %}Economy{% endif %}
+      </span>
+      {% if f.concession_badge %}
+        <span class="scope-badge concession-tag" title="{{ f.doc_required }}">{{ f.concession_badge }}</span>
+      {% endif %}
+      {% if f.badge %}
+        <span class="tag-badge tag-{{ f.badge|slugify }}">{{ f.badge }}</span>
+      {% endif %}
+      <span class="badge {{ f.status|status_class }}">
+        <span class="live-dot"></span> {{ f.status|status_label }}
+      </span>
+    </div>
+  </div>
+
+  <div class="fc-main-grid">
+    <div class="node-dep">
+      <div class="node-time">{{ f.scheduled_departure|isotime }}</div>
+      <div class="node-code">{{ f.dep_iata }}</div>
+      <div class="node-gate">{% if f.dep_terminal %}T{{ f.dep_terminal }}{% else %}T—{% endif %}{% if f.dep_gate %} · Gate {{ f.dep_gate }}{% endif %}</div>
+      {% if f.actual_departure %}
+        <div class="live-timing actual">Actual {{ f.actual_departure|isotime }} ({% delay_minutes f 'dep' %})</div>
+      {% elif f.estimated_departure %}
+        <div class="live-timing est">Est. {{ f.estimated_departure|isotime }} ({% delay_minutes f 'dep' %})</div>
+      {% endif %}
+    </div>
+
+    <div class="node-mid">
+      <div class="flight-duration">{{ f.duration_str|default:"2h 30m" }}</div>
+      <div class="flight-track{% if f.is_connecting %} is-connecting-track{% endif %}">
+        <span class="dot-start" title="{{ f.dep_iata }}"></span>
+        <span class="track-line"></span>
+        {% if f.is_connecting %}
+          <span class="dot-layover" title="Layover at {{ f.layover_airport }}"></span>
+          <span class="track-line"></span>
+        {% endif %}
+        <!-- Crisp SVG airplane pointing directly to the destination (East/Right) -->
+        <svg class="track-plane-svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-label="Flight direction towards {{ f.arr_iata }}">
+          <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" transform="rotate(90 12 12)"/>
+        </svg>
+        <span class="track-line"></span>
+        <span class="dot-end" title="{{ f.arr_iata }}"></span>
+      </div>
+      <div class="flight-stops{% if f.is_connecting %} connecting-highlight{% endif %}">{{ f.stops|default:"Non-stop" }}</div>
+    </div>
+
+    <div class="node-arr">
+      <div class="node-time">{{ f.scheduled_arrival|isotime }}</div>
+      <div class="node-code">{{ f.arr_iata }}</div>
+      <div class="node-gate">{% if f.arr_terminal %}T{{ f.arr_terminal }}{% else %}T—{% endif %}{% if f.arr_gate %} · Gate {{ f.arr_gate }}{% endif %}</div>
+      {% if f.actual_arrival %}
+        <div class="live-timing actual">Landed {{ f.actual_arrival|isotime }}</div>
+      {% elif f.estimated_arrival %}
+        <div class="live-timing est">Est. {{ f.estimated_arrival|isotime }}</div>
+      {% endif %}
+    </div>
+
+    <div class="node-price-action">
+      <div class="price-box">
+        <div class="price-val">
+          <span class="curr">₹</span>{{ f.price|inr_format }}
+          {% if f.original_price and f.concession_savings %}
+            <span class="price-original">₹{{ f.original_price|inr_format }}</span>
+          {% endif %}
+        </div>
+        {% if f.concession_savings %}
+          <div class="concession-saving-pill">Save ₹{{ f.concession_savings|inr_format }} ({{ f.concession_name }})</div>
+        {% endif %}
+        <div class="price-note">per traveller · {{ f.travel_class|default:'Economy'|title }}</div>
+      </div>
+      <div class="btn-box">
+        <a class="btn btn-ghost btn-sm" href="{% url 'flight_detail' %}?number={{ f.flight_number|urlencode }}&date={{ f.dep_date }}&source={{ f.dep_iata }}&dest={{ f.arr_iata }}&pax={{ pax }}&travel_class={{ f.travel_class|default:'economy' }}&fare_type={{ f.fare_type|default:'regular' }}">Details</a>
+        <a class="btn btn-orange btn-sm" href="{% url 'book_start' %}?number={{ f.flight_number|urlencode }}&date={{ f.dep_date }}&source={{ f.dep_iata }}&dest={{ f.arr_iata }}&pax={{ pax }}&travel_class={{ f.travel_class|default:'economy' }}&fare_type={{ f.fare_type|default:'regular' }}">Book</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="fc-footer-strip">
+    <span class="perk-item">🧳 {{ f.baggage|default:"15 kg Check-in · 7 kg Cabin" }}</span>
+    <span class="perk-item">🍽️ {{ f.meal|default:"Buy on Board" }}</span>
+    <span class="perk-item">🛡️ Free Cancellation available</span>
+    <span class="perk-item live-pulse-label">● Live Real-Time Feed</span>
+  </div>
+</article>
+{% empty %}
+<div class="empty">
+  <strong>No flights found for this route and date.</strong>
+  <span>Try another date or airport code.</span>
+</div>
+{% endfor %}
+{% if hidden %}
+<p class="hidden-note">{{ hidden }} earlier flight{{ hidden|pluralize }} today departed earlier. <a href="?{{ query }}&show_all=1">Show all today's flights</a></p>
+{% endif %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}My bookings{% endblock %}
+{% block content %}
+<main class="narrow"><h2>My bookings</h2>
+{% for b in bookings %}
+<article class="flight-card">
+  <div class="fc-main"><div class="fc-airline"><span class="fc-code">{{ b.reference[:2] }}</span>
+    <div><strong>{{ b.airline_name|default("Airline") }} {{ b.flight_number }}</strong><small>Ref {{ b.reference }} · {{ b.passenger_count }} passenger{{ b.passenger_count|pluralize }}</small></div></div>
+    <div class="fc-route">
+      <div class="stop"><b>{{ b.scheduled_departure|isotime }}</b><small>{{ b.dep_iata }}</small></div>
+      <div class="flight-track" style="max-width: 130px; margin: 0 8px;">
+        <span class="dot-start"></span>
+        <div class="track-rail">
+          <span class="track-line-bg"></span>
+          <span class="track-line-active"></span>
+          <div class="mini-flight-tracer">
+            <svg class="track-plane-svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" transform="rotate(90 12 12)"/>
+            </svg>
+            <span class="tracer-jetstream"></span>
+          </div>
+        </div>
+        <span class="dot-end"></span>
+      </div>
+      <div class="stop"><b>{{ b.scheduled_arrival|isotime }}</b><small>{{ b.arr_iata }}</small></div>
+    </div></div>
+  <div class="fc-side">
+    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-bottom: 6px;">
+      <small class="gate">{{ b.dep_date|date("d M Y") }}</small>
+      {% if b.booking_status == 'cancelled' %}
+        <span style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;">Cancelled</span>
+      {% else %}
+        {% if b.cancellation_policy and b.cancellation_policy.dgca_eligible %}
+          <span style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;" title="DGCA 2026: 48h zero-charge cancellation window active">🛡️ DGCA Free Cancel ({{ b.cancellation_policy.hours_remaining_48h }}h)</span>
+        {% else %}
+          <span style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;">Confirmed</span>
+        {% endif %}
+      {% endif %}
+    </div>
+    <div class="fc-actions" style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
+      <a class="btn btn-ghost btn-sm" href="{{ url_for('confirmation', reference=b.reference) }}">View</a>
+      {% if b.booking_status == 'confirmed' %}
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('boarding_pass_pdf', reference=b.reference) }}" download>Pass (PDF)</a>
+        <form method="post" action="{{ url_for('cancel_booking', reference=b.reference) }}" onsubmit="return confirm('Cancel ticket {{ b.reference }} for {{ b.flight_number }}? Full refund with ₹0 fees will be initiated under DGCA 2026 rules & Member policy.');" style="display: inline-block; margin: 0;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-sm" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; cursor: pointer; padding: 6px 12px; font-weight: 600;">
+            Cancel Ticket
+          </button>
+        </form>
+      {% endif %}
+      {% if b.dep_date >= today and b.booking_status == 'confirmed' %}
+        <button type="button" class="btn btn-teal btn-sm" onclick="openLiveFlightMapModal('{{ b.flight_number }}', '{{ b.dep_iata }}', '{{ b.arr_iata }}', '{{ b.dep_date|date }}', '{{ b.travel_class|default("economy") }}')" title="Track Flight Route on Google Map">
+          🗺️ Live Map
+        </button>
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('flight_detail') }}?number={{ b.flight_number }}&date={{ b.dep_date|date('Y-m-d') }}&source={{ b.dep_iata }}&dest={{ b.arr_iata }}&pax={{ b.passenger_count }}">Live status</a>
+      {% endif %}
+    </div>
+  </div>
+</article>
+{% else %}<div class="empty"><strong>No bookings yet.</strong><span><a href="{{ url_for('home') }}">Search flights</a> to make your first booking.</span></div>
+{% endfor %}</main>
+{% endblock %}

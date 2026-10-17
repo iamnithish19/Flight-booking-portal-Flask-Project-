@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load flight_extras %}
+{% block title %}My bookings{% endblock %}
+{% block content %}
+<main class="narrow"><h2>My bookings</h2>
+{% for b in bookings %}
+<article class="flight-card">
+  <div class="fc-main"><div class="fc-airline"><span class="fc-code">{{ b.reference|slice:":2" }}</span>
+    <div><strong>{{ b.airline_name|default:"Airline" }} {{ b.flight_number }}</strong><small>Ref {{ b.reference }} · {{ b.passenger_count }} passenger{{ b.passenger_count|pluralize }}</small></div></div>
+    <div class="fc-route"><div class="stop"><b>{{ b.scheduled_departure|isotime }}</b><small>{{ b.dep_iata }}</small></div><div class="line"><i></i><i></i></div>
+      <div class="stop"><b>{{ b.scheduled_arrival|isotime }}</b><small>{{ b.arr_iata }}</small></div></div></div>
+  <div class="fc-side"><small class="gate">{{ b.dep_date|date:"d M Y" }} · {{ b.get_booking_status_display }}</small>
+    <div class="fc-actions">
+      <a class="btn btn-ghost btn-sm" href="{% url 'confirmation' b.reference %}">View</a>
+      <a class="btn btn-ghost btn-sm" href="{% url 'boarding_pass_pdf' b.reference %}" download>Pass (PDF)</a>
+      {% if b.dep_date >= today %}<a class="btn btn-teal btn-sm" href="{% url 'flight_detail' %}?number={{ b.flight_number }}&date={{ b.dep_date|date:'Y-m-d' }}&source={{ b.dep_iata }}&dest={{ b.arr_iata }}&pax={{ b.passenger_count }}">Live status</a>{% endif %}</div></div>
+</article>
+{% empty %}<div class="empty"><strong>No bookings yet.</strong><span><a href="{% url 'home' %}">Search flights</a> to make your first booking.</span></div>
+{% endfor %}</main>
+{% endblock %}

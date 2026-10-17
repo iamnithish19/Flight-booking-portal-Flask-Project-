@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block title %}{{ flight.flight_number }} · {{ flight.dep_iata }} to {{ flight.arr_iata }} · Flight Details{% endblock %}
+{% block content %}
+<main class="narrow">
+  <a class="back" href="javascript:history.back()">← Back to results</a>
+  {% if error %}
+    <div class="msg msg-error" role="alert">{{ error }}</div>
+  {% else %}
+  <div class="panel detail-panel">
+    <div class="panel-head">
+      <div class="detail-airline-box">
+        <span class="airline-logo logo-{{ flight.airline_iata|lower }}">{{ flight.airline_iata|default("✈") }}</span>
+        <div>
+          <small>{{ flight.airline_name|default("Airline unavailable") }}</small>
+          <h2>{{ flight.flight_number }} · {{ flight.dep_iata }} → {{ flight.arr_iata }}</h2>
+        </div>
+      </div>
+      <div class="detail-status-box" style="display: flex; gap: 8px; align-items: center;">
+        <span class="class-badge class-{{ travel_class|default('economy') }}" style="font-size: 13px; padding: 5px 12px;">
+          {{ travel_class|default('Economy')|title }} Class
+        </span>
+        <span class="badge {{ flight.status|status_class }}">
+          <span class="live-dot"></span> {{ flight.status|status_label }}
+        </span>
+        <a href="#detail-flight-radar-section" class="btn btn-sm btn-teal" style="font-size: 12px; display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px;">
+          <span>🗺️</span> View Google Map
+        </a>
+      </div>
+    </div>
+
+    {% if flight.is_connecting %}
+    <div class="connecting-alert-banner" style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 8px; padding: 12px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+      <div>
+        <strong style="color: #f59e0b; font-size: 14px;">1 Stop Connecting Flight via {{ flight.layover_airport }}</strong>
+        <span style="display: block; font-size: 12.5px; color: #cbd5e1; margin-top: 2px;">Transit layover duration: <b>{{ flight.layover_minutes }} minutes</b> at {{ flight.layover_airport }}</span>
+      </div>
+      <span style="font-size: 20px;">🔄</span>
+    </div>
+    {% endif %}
+
+    <!-- Live Real-Time Flight Progress Tracker -->
+    <div class="flight-progress-timeline">
+      <div class="step-point {% if flight.status == 'Scheduled' or flight.status == 'On Time' or flight.status == 'Boarding' or flight.status == 'Departed' or flight.status == 'In Flight' or flight.status == 'Landed' %}completed{% endif %}">
+        <div class="step-circle">1</div>
+        <div class="step-name">Check-in Open</div>
+        <div class="step-time">{{ flight.scheduled_departure|isotime }}</div>
+      </div>
+      <div class="step-line {% if flight.status == 'Boarding' or flight.status == 'Departed' or flight.status == 'In Flight' or flight.status == 'Landed' %}completed{% endif %}"></div>
+      <div class="step-point {% if flight.status == 'Boarding' or flight.status == 'Departed' or flight.status == 'In Flight' or flight.status == 'Landed' %}completed active{% endif %}">
+        <div class="step-circle">2</div>
+        <div class="step-name">Boarding</div>
+        <div class="step-time">Gate {% if flight.dep_gate %}{{ flight.dep_gate }}{% else %}TBD{% endif %}</div>
+      </div>
+      <div class="step-line {% if flight.status == 'Departed' or flight.status == 'In Flight' or flight.status == 'Landed' %}completed{% endif %}"></div>
+      <div class="step-point {% if flight.status == 'Departed' or flight.status == 'In Flight' or flight.status == 'Landed' %}completed active{% endif %}">
+        <div class="step-circle">3</div>
+        <div class="step-name">Takeoff</div>
+        <div class="step-time">{% if flight.actual_departure %}{{ flight.actual_departure|isotime }}{% else %}{{ flight.scheduled_departure|isotime }}{% endif %}</div>
+      </div>
+      <div class="step-line {% if flight.status == 'In Flight' or flight.status == 'Landed' %}completed{% endif %}"></div>
+      <div class="step-point {% if flight.status == 'In Flight' or flight.status == 'Landed' %}completed active{% endif %}">
+        <div class="step-circle">4</div>
+        <div class="step-name">In Flight</div>
+        <div class="step-time">{{ flight.duration_str|default("Cruising") }}</div>
+      </div>
+      <div class="step-line {% if flight.status == 'Landed' %}completed{% endif %}"></div>
+      <div class="step-point {% if flight.status == 'Landed' %}completed{% endif %}">
+        <div class="step-circle">5</div>
+        <div class="step-name">Landed</div>
+        <div class="step-time">{{ flight.scheduled_arrival|isotime }}</div>
+      </div>
+    </div>
+
+    <!-- Live Interactive Google Maps Flight Radar Section -->
+    {% if telemetry %}
+    <section class="flight-radar-section" id="detail-flight-radar-section">
+      <div class="radar-header">
+        <div class="radar-title-box">
+          <div class="radar-icon-pulse">✈️</div>
+          <div>
+            <h3>Live Google Map Flight Tracker</h3>
+            <span class="radar-live-tag">
+              <span class="live-dot"></span>
+              {{ telemetry.phase }} · {{ telemetry.progress_percent }}% Completed
+            </span>
+          </div>
+        </div>
+        <div class="radar-toolbar">
+          <button id="detail-radar-trace-btn" class="radar-btn radar-btn-trace active" onclick="toggleRadarRouteTracer('detail-radar-map-elem', this)" title="Toggle Mini Flight Tracing on Path">⏸ Pause Trace</button>
+          <a class="radar-btn radar-btn-gmap" href="{{ telemetry.google_maps_directions_url }}" target="_blank" rel="noopener">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            Open in Google Maps ↗
+          </a>
+          <button class="radar-btn" onclick="recenterRadarAircraft('detail-radar-map-elem')" title="Center on Plane">🎯 Center Plane</button>
+          <button class="radar-btn" onclick="fitRadarRoute('detail-radar-map-elem')" title="Fit Entire Route">🔄 Fit Route</button>
+        </div>
+      </div>
+
+      <div class="radar-map-wrapper">
+        <!-- Map Layer Switcher -->
+        <div class="map-layer-selector">
+          <button class="layer-opt-btn active" onclick="switchRadarLayer('detail-radar-map-elem', 'hybrid', this)">Google Satellite</button>
+          <button class="layer-opt-btn" onclick="switchRadarLayer('detail-radar-map-elem', 'streets', this)">Google Streets</button>
+          <button class="layer-opt-btn" onclick="switchRadarLayer('detail-radar-map-elem', 'terrain', this)">Google Terrain</button>
+          <button class="layer-opt-btn" onclick="switchRadarLayer('detail-radar-map-elem', 'flightaware', this)">Dark Radar</button>
+        </div>
+        <div id="detail-radar-map-elem" class="radar-map-elem"></div>
+      </div>
+
+      <!-- Live Flight Telemetry HUD -->
+      <div class="radar-telemetry-hud">
+        <div class="hud-stat-box">
+          <div class="hud-stat-label"><span>⚡</span> Flight Status</div>
+          <div class="hud-stat-val accent-cyan" id="detail-radar-map-elem-phase">{{ telemetry.phase }}</div>
+        </div>
+        <div class="hud-stat-box">
+          <div class="hud-stat-label"><span>🏔️</span> Altitude</div>
+          <div class="hud-stat-val" id="detail-radar-map-elem-alt">{% if telemetry.altitude_ft %}{{ telemetry.altitude_ft|inr_format }} ft{% else %}0 ft (Ground){% endif %}</div>
+        </div>
+        <div class="hud-stat-box">
+          <div class="hud-stat-label"><span>💨</span> Ground Speed</div>
+          <div class="hud-stat-val accent-green" id="detail-radar-map-elem-spd">{{ telemetry.speed_kmh }} km/h</div>
+        </div>
+        <div class="hud-stat-box">
+          <div class="hud-stat-label"><span>🧭</span> Heading</div>
+          <div class="hud-stat-val">{{ telemetry.heading_degrees }}°</div>
+        </div>
+        <div class="hud-stat-box">
+          <div class="hud-stat-label"><span>📏</span> Distance Traveled</div>
+          <div class="hud-stat-val">{{ telemetry.traveled_km }} / {{ telemetry.total_distance_km }} km</div>
+        </div>
+        <div class="hud-stat-box">
+          <div class="hud-stat-label"><span>📍</span> Live Coordinates</div>
+          <div class="hud-stat-val accent-amber" id="detail-radar-map-elem-coord">{{ telemetry.current_location.lat|round(4) }}, {{ telemetry.current_location.lon|round(4) }}</div>
+        </div>
+      </div>
+
+      <!-- Route Progression Scrubber / Replay -->
+      <div class="radar-scrubber-bar">
+        <span>🛫 {{ flight.dep_iata }}</span>
+        <input type="range" id="detail-radar-map-elem-scrubber" min="0" max="100" step="0.5" value="{{ telemetry.progress_percent }}" title="Simulate flight position along route">
+        <span>{{ flight.arr_iata }} 🛬</span>
+      </div>
+    </section>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        var telemetryData = {{ telemetry|tojson }};
+        if (telemetryData && window.initFlightRadar) {
+          window.initFlightRadar("detail-radar-map-elem", telemetryData);
+        }
+      });
+    </script>
+    {% endif %}
+
+    <!-- Departure and Arrival Columns -->
+    <div class="two-col">
+      <div class="node-card">
+        <h4>Departure · {{ flight.dep_airport|default(flight.dep_iata) }}</h4>
+        <dl>
+          <dt>Date</dt><dd>{{ flight.dep_date|isodate }}</dd>
+          <dt>Scheduled</dt><dd><b>{{ flight.scheduled_departure|isotime }}</b></dd>
+          <dt>Estimated</dt><dd>{{ flight.estimated_departure|isotime }}</dd>
+          <dt>Actual</dt><dd>{{ flight.actual_departure|isotime }}</dd>
+          <dt>Terminal</dt><dd><b>{{ flight.dep_terminal|default("—") }}</b></dd>
+          <dt>Gate</dt><dd><b>{{ flight.dep_gate|default("—") }}</b></dd>
+        </dl>
+      </div>
+
+      <div class="node-card">
+        <h4>Arrival · {{ flight.arr_airport|default(flight.arr_iata) }}</h4>
+        <dl>
+          <dt>Scheduled</dt><dd><b>{{ flight.scheduled_arrival|isotime }}</b></dd>
+          <dt>Estimated</dt><dd>{{ flight.estimated_arrival|isotime }}</dd>
+          <dt>Actual</dt><dd>{{ flight.actual_arrival|isotime }}</dd>
+          <dt>Terminal</dt><dd><b>{{ flight.arr_terminal|default("—") }}</b></dd>
+          <dt>Gate</dt><dd><b>{{ flight.arr_gate|default("—") }}</b></dd>
+          <dt>Aircraft</dt><dd>{{ flight.aircraft|default("—") }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- Fare & Baggage Summary (Ixigo Style) -->
+    <div class="fare-perks-panel">
+      <div class="fare-breakdown">
+        <h4>Fare Summary</h4>
+        {% if flight.original_price and flight.concession_savings %}
+          <div class="fare-row"><span>Original Base Fare</span><span>₹{{ flight.original_price|inr_format }}</span></div>
+          <div class="fare-row discount" style="color: #16a34a;"><span>{{ flight.concession_name }}</span><span>-₹{{ flight.concession_savings|inr_format }}</span></div>
+        {% else %}
+          <div class="fare-row"><span>Base Fare (1 Adult)</span><span>₹{{ flight.price|default(4999)|inr_format }}</span></div>
+        {% endif %}
+        <div class="fare-row"><span>Aviation Security & Taxes</span><span>₹650</span></div>
+        <div class="fare-row discount"><span>Ixigo Instant Discount</span><span>-₹650</span></div>
+        <div class="fare-row total"><span>Total Payable</span><span class="total-amt">₹{{ flight.price|default(4999)|inr_format }}</span></div>
+      </div>
+      <div class="baggage-inclusions">
+        <h4>Inclusions & Amenities</h4>
+        <ul>
+          {% if flight.concession_badge %}
+            <li style="color: #0284c7; font-weight: 600;"><span>🎫</span> <strong>Special Fare:</strong> {{ flight.concession_badge }}</li>
+            <li style="font-size: .85rem; color: #475569;"><span>📋</span> <strong>ID Requirement:</strong> {{ flight.doc_required }}</li>
+          {% endif %}
+          <li>🧳 <strong>Baggage:</strong> {{ flight.baggage|default("15 kg Check-in, 7 kg Cabin baggage") }}</li>
+          <li>🍽️ <strong>In-Flight Dining:</strong> {{ flight.meal|default("Buy on Board / Pre-book Meals") }}</li>
+          <li>🛡️ <strong>DGCA 2026 Free Cancellation:</strong> 100% refund with ₹0 fees within 48h of booking (flights departing ≥7d domestic / ≥15d intl), plus Regular Member zero-fee protection up to 2h before departure.</li>
+          <li>⚡ <strong>Live Updates:</strong> Real-time gate changes & push notifications enabled.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="detail-actions">
+      <a class="btn btn-orange btn-lg" href="{{ url_for('book_start') }}?{{ book_qs }}">Book this flight for ₹{{ flight.price|default(4999)|inr_format }}</a>
+      {% if not user.is_authenticated %}
+        <p class="fine mt-2">You will be asked to log in or create an account to finalize your ticket.</p>
+      {% endif %}
+    </div>
+
+    <p class="fine mt-4">Real-time flight data synchronized at {{ flight.fetched_at|localclock }} · Times local to airports.</p>
+  </div>
+  {% endif %}
+</main>
+{% endblock %}

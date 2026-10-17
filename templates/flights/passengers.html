@@ -1,0 +1,747 @@
+{% extends "base.html" %}
+{% block title %}Passenger Details &amp; Seat Selection · {{ flight.airline_name }} {{ flight.flight_number }}{% endblock %}
+{% block body_class %}theme-dark{% endblock %}
+
+{% block content %}
+<main class="dark-layout">
+  <form method="post" class="dark-form" id="pax-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-title-row" style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+      <div>
+        <h2 style="margin: 0; font-size: 24px; font-weight: 700;">Passenger Details &amp; Seat Selection</h2>
+        <p style="margin: 4px 0 0; font-size: 13px; color: #94a3b8;">{{ flight.airline_name }} {{ flight.flight_number }} &middot; {{ flight.dep_iata }} &rarr; {{ flight.arr_iata }} &middot; {{ flight.dep_date }}</p>
+      </div>
+      <span class="class-badge class-{{ travel_class|default('economy') }}" style="font-size: 13px; padding: 6px 14px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.5px;">
+        {{ travel_class|default('Economy')|title }} Class
+      </span>
+    </div>
+
+    {% if is_international %}
+    <div class="route-travel-banner intl" style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+      <span style="font-size: 22px;">🌐</span>
+      <div style="font-size: 13px; color: #fca5a5;">
+        <strong style="color: #f87171; display: block; font-size: 14px;">International Flight (Abroad Trip)</strong>
+        All passengers must provide valid Passport details as per international aviation regulations.
+      </div>
+    </div>
+    {% else %}
+    <div class="route-travel-banner domestic" style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+      <span style="font-size: 22px;">🇮🇳</span>
+      <div style="font-size: 13px; color: #a7f3d0;">
+        <strong style="color: #34d399; display: block; font-size: 14px;">Domestic Flight (India)</strong>
+        Travel with government photo ID (Aadhaar, Voter ID, Driving License). <em>Passport is not required for Indian citizens on domestic flights.</em>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if flight.concession_badge %}
+    <div class="route-travel-banner concession-alert" style="background: rgba(14, 165, 233, 0.15); border: 1px solid rgba(14, 165, 233, 0.4); border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+      <span style="font-size: 24px;">🎫</span>
+      <div style="font-size: 13px; color: #bae6fd;">
+        <strong style="color: #38bdf8; display: block; font-size: 14px;">{{ flight.concession_badge }} Applied</strong>
+        <span>{{ flight.doc_required|default("Please ensure all eligible passengers carry valid verification ID/documents at the airport check-in counter.") }}</span>
+      </div>
+    </div>
+    {% endif %}
+
+    {{ formset.management_form }}
+    {% if formset.non_form_errors %}<div class="msg msg-error">{{ formset.non_form_errors }}</div>{% endif %}
+
+    {% for form in formset %}
+    <fieldset class="pax-fieldset" data-index="{{ loop.index0 }}" style="background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 18px 20px; margin-bottom: 22px;">
+      <legend style="padding: 0 10px; font-weight: 600; color: #38bdf8; font-size: 15px;">Passenger {{ loop.index }}</legend>
+
+      <div class="grid-2">
+        <label>First name
+          {{ form.first_name }}
+          {% for e in form.first_name.errors %}<small class="err">{{ e }}</small>{% endfor %}
+        </label>
+        <label>Last name
+          {{ form.last_name }}
+          {% for e in form.last_name.errors %}<small class="err">{{ e }}</small>{% endfor %}
+        </label>
+      </div>
+
+      <div class="grid-2" style="margin-top: 12px;">
+        <label>Date of birth
+          {{ form.date_of_birth }}
+          {% for e in form.date_of_birth.errors %}<small class="err">{{ e }}</small>{% endfor %}
+        </label>
+        <label>Gender
+          {{ form.gender }}
+          {% for e in form.gender.errors %}<small class="err">{{ e }}</small>{% endfor %}
+        </label>
+      </div>
+
+      <div class="grid-2" style="margin-top: 12px;">
+        <label>Nationality
+          {{ form.nationality }}
+          {% for e in form.nationality.errors %}<small class="err">{{ e }}</small>{% endfor %}
+        </label>
+        <label class="gov-id-group">Government ID / Aadhaar (optional)
+          {{ form.id_number }}
+          {% for e in form.id_number.errors %}<small class="err">{{ e }}</small>{% endfor %}
+        </label>
+      </div>
+
+      <!-- Passport fields (Conditionally displayed: only for international trips or foreign travelers) -->
+      <div class="passport-group grid-2" style="margin-top: 12px; background: rgba(15, 23, 42, 0.45); padding: 12px 14px; border-radius: 8px; border: 1px dashed rgba(255,255,255,0.15); display: {% if is_international %}grid{% else %}none{% endif %};">
+        <label>Passport Number <span class="req-star" style="color: #f87171;">*</span>
+          {{ form.passport_number }}
+          {% for e in form.passport_number.errors %}<small class="err">{{ e }}</small>{% endfor %}
+        </label>
+        <label>Passport Expiry Date
+          {{ form.passport_expiry }}
+          {% for e in form.passport_expiry.errors %}<small class="err">{{ e }}</small>{% endfor %}
+        </label>
+      </div>
+
+      <!-- Seat Badge Row -->
+      <div class="seat-badge-container" style="margin-top: 14px; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 22px;">💺</span>
+          <div>
+            <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: #94a3b8; display: block; font-weight: 600;">Selected Seat</span>
+            <div style="display: flex; align-items: baseline; gap: 6px;">
+              <strong class="pax-seat-display" id="pax-seat-display-{{ loop.index0 }}" style="font-size: 16px; color: #38bdf8; font-family: monospace; letter-spacing: 0.5px;">
+                Seat {{ form.seat_number.value|default("30A") }}
+              </strong>
+              <span class="pax-seat-type" id="pax-seat-type-{{ loop.index0 }}" style="font-size: 12px; color: #64748b;">(Standard)</span>
+            </div>
+          </div>
+        </div>
+        {{ form.seat_number }}
+        <button type="button" class="btn btn-outline btn-sm trigger-seatmap-btn" data-pax-index="{{ loop.index0 }}" style="display: inline-flex; align-items: center; gap: 6px; border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;">
+          <span>✈️ Change Seat on Map</span>
+        </button>
+      </div>
+    </fieldset>
+    {% endfor %}
+
+    <!-- ============================================================== -->
+    <!-- INTERACTIVE AIRCRAFT SEAT MAP SECTION                          -->
+    <!-- ============================================================== -->
+    <section class="seatmap-section" id="seatmap-section" style="margin: 30px 0; background: #0b1120; border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 24px; box-shadow: 0 20px 45px rgba(0,0,0,0.5);">
+      <div class="seatmap-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 16px;">
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 24px;">🛫</span>
+            <h3 style="margin: 0; font-size: 19px; font-weight: 700; color: #f8fafc;">Aircraft Cabin Seat Selection</h3>
+          </div>
+          <p style="margin: 4px 0 0; font-size: 13px; color: #94a3b8;">
+            Boeing 777 / Airbus A350 Widebody &middot; Click any unbooked seat to select it for the active passenger.
+          </p>
+        </div>
+        <div class="seatmap-stats" style="font-size: 12px; color: #38bdf8; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 6px 12px;">
+          Live Aircraft Occupancy: <strong style="color: #fff;">{{ seat_map.available_seats|length }}</strong> seats available
+        </div>
+      </div>
+
+      <!-- Passenger Switcher Tabs -->
+      <div class="pax-switcher-row" style="margin-bottom: 16px;">
+        <span style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; display: block; margin-bottom: 8px;">
+          Select Passenger To Seat:
+        </span>
+        <div class="pax-tabs-container" id="pax-tabs-container" style="display: flex; gap: 8px; flex-wrap: wrap;">
+          {% for form in formset %}
+          <button type="button" class="pax-tab-btn {% if loop.first %}active{% endif %}" data-pax-index="{{ loop.index0 }}" id="pax-tab-{{ loop.index0 }}" style="padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
+            <span class="pax-avatar" style="width: 22px; height: 22px; border-radius: 50%; background: #0284c7; color: #fff; font-size: 11px; display: inline-flex; align-items: center; justify-content: center;">
+              P{{ loop.index }}
+            </span>
+            <span class="pax-name-label">Passenger {{ loop.index }}</span>
+            <span class="pax-seat-tag" id="tab-seat-tag-{{ loop.index0 }}" style="background: rgba(255,255,255,0.15); padding: 2px 6px; border-radius: 4px; font-size: 11px; font-family: monospace;">
+              {{ form.seat_number.value|default("-") }}
+            </span>
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Seat Map Legend -->
+      <div class="seatmap-legend" style="display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; background: rgba(15, 23, 42, 0.6); padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); font-size: 12px;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span class="legend-box available" style="width: 14px; height: 14px; border-radius: 3px; background: #059669; border: 1px solid #10b981; display: inline-block;"></span>
+          <span style="color: #cbd5e1;">Available (Click to Select)</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span class="legend-box active" style="width: 14px; height: 14px; border-radius: 3px; background: #0284c7; border: 1px solid #38bdf8; box-shadow: 0 0 6px #38bdf8; display: inline-block;"></span>
+          <span style="color: #cbd5e1;">Selected (Current Passenger)</span>
+        </div>
+        {% if pax > 1 %}
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span class="legend-box other-pax" style="width: 14px; height: 14px; border-radius: 3px; background: #7c3aed; border: 1px solid #a855f7; display: inline-block;"></span>
+          <span style="color: #cbd5e1;">Selected (Other Passenger)</span>
+        </div>
+        {% endif %}
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span class="legend-box booked" style="width: 14px; height: 14px; border-radius: 3px; background: #334155; border: 1px solid #475569; position: relative; display: inline-block;">
+            <span style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #94a3b8;">✕</span>
+          </span>
+          <span style="color: #94a3b8;">Booked / Occupied (Not Available)</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span class="legend-box exit" style="width: 14px; height: 14px; border-radius: 3px; background: rgba(239, 68, 68, 0.2); border: 1px dashed #ef4444; display: inline-block;"></span>
+          <span style="color: #fca5a5;">Emergency Exit Row</span>
+        </div>
+      </div>
+
+      <!-- Aircraft Cabin Canvas -->
+      <div class="aircraft-scroll-wrapper" style="overflow-x: auto; padding: 20px 10px; background: radial-gradient(circle at center, rgba(15, 23, 42, 0.9) 0%, #030712 100%); border-radius: 14px; border: 1px solid rgba(255,255,255,0.06);">
+        <div class="fuselage" style="max-width: 580px; margin: 0 auto; position: relative; background: #0f172a; border: 2px solid rgba(255,255,255,0.15); border-radius: 90px 90px 40px 40px; padding: 30px 16px 40px; box-shadow: 0 0 50px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,0,0,0.5);">
+          
+          <!-- Airplane Cockpit Nose Visual -->
+          <div class="cockpit-nose" style="position: relative; width: 100%; text-align: center; margin-bottom: 24px;">
+            <div style="width: 120px; height: 28px; background: rgba(56, 189, 248, 0.15); border: 2px solid rgba(56, 189, 248, 0.4); border-radius: 20px 20px 4px 4px; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <span style="width: 22px; height: 10px; background: rgba(56, 189, 248, 0.6); border-radius: 2px;"></span>
+              <span style="width: 22px; height: 10px; background: rgba(56, 189, 248, 0.6); border-radius: 2px;"></span>
+            </div>
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #64748b; font-weight: 700;">
+              &uarr; FRONT OF AIRCRAFT &uarr;
+            </div>
+          </div>
+
+          <!-- Forward Galleys and Lavatories -->
+          <div class="amenities-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 10px;">
+            <div class="amenity-badge galley" style="background: rgba(245, 158, 11, 0.18); border: 1px solid #f59e0b; color: #fbbf24; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700;">
+              ☕ G (Galley)
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <div class="amenity-badge wc" style="background: rgba(2, 132, 199, 0.18); border: 1px solid #0284c7; color: #38bdf8; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700;">
+                🚻 WC (Lavatory)
+              </div>
+              <div class="amenity-badge galley" style="background: rgba(245, 158, 11, 0.18); border: 1px solid #f59e0b; color: #fbbf24; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700;">
+                ☕ G
+              </div>
+            </div>
+          </div>
+
+          <!-- Cabin Sections Rendered -->
+          <div id="seatmap-sections-container">
+            <!-- Populated via JavaScript dynamically for maximum responsiveness -->
+          </div>
+
+          <!-- Rear Amenities -->
+          <div class="amenities-row" style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding: 0 10px;">
+            <div class="amenity-badge wc" style="background: rgba(2, 132, 199, 0.18); border: 1px solid #0284c7; color: #38bdf8; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700;">
+              🚻 WC
+            </div>
+            <div class="amenity-badge galley" style="background: rgba(245, 158, 11, 0.18); border: 1px solid #f59e0b; color: #fbbf24; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700;">
+              ☕ G (Rear Galley)
+            </div>
+            <div class="amenity-badge wc" style="background: rgba(2, 132, 199, 0.18); border: 1px solid #0284c7; color: #38bdf8; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700;">
+              🚻 WC
+            </div>
+          </div>
+
+          <div style="text-align: center; margin-top: 20px; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #64748b; font-weight: 700;">
+            &darr; REAR OF AIRCRAFT &darr;
+          </div>
+        </div>
+      </div>
+
+      <!-- Seat Info Notification Bar -->
+      <div id="seat-status-bar" style="margin-top: 16px; padding: 12px 16px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; font-size: 13px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span id="seat-status-icon">💡</span>
+          <span id="seat-status-message" style="color: #cbd5e1;">Click an unbooked green seat to assign it to Passenger 1.</span>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline" id="auto-assign-all-btn" style="font-size: 12px;">
+          ⚡ Auto-Assign Next Best Available Seats
+        </button>
+      </div>
+    </section>
+
+    <fieldset><legend>Contact Details</legend>
+      <div class="grid-2">
+        {% for field in contact %}
+        <label>{{ field.label }}{{ field }}{% for e in field.errors %}<small class="err">{{ e }}</small>{% endfor %}</label>
+        {% endfor %}
+      </div>
+    </fieldset>
+
+    <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <a href="{{ url_for('flight_detail') }}?number={{ flight.flight_number }}&date={{ flight.dep_date }}" class="btn btn-outline">
+        &larr; Back to Flight
+      </a>
+      <button class="btn btn-mint btn-lg" type="submit" style="padding: 14px 28px; font-size: 16px; font-weight: 700;">
+        Confirm Booking &amp; Generate Boarding Pass &rarr;
+      </button>
+    </div>
+  </form>
+
+  {% include "flights/_summary.html" %}
+</main>
+
+<style>
+/* Seat Map Styling */
+.pax-tab-btn {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+}
+.pax-tab-btn.active {
+  background: #0284c7 !important;
+  border-color: #38bdf8 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 15px rgba(2, 132, 199, 0.4);
+}
+.pax-tab-btn.active .pax-avatar {
+  background: #ffffff !important;
+  color: #0284c7 !important;
+}
+
+.cabin-section-box {
+  margin-bottom: 24px;
+}
+.cabin-title-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0 12px;
+}
+.cabin-title-divider span {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+.cabin-title-divider hr {
+  flex: 1;
+  border: none;
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+}
+
+.seat-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  position: relative;
+}
+.seat-row.exit-row {
+  background: rgba(239, 68, 68, 0.08);
+  border-top: 1px dashed rgba(239, 68, 68, 0.3);
+  border-bottom: 1px dashed rgba(239, 68, 68, 0.3);
+  padding: 4px 0;
+  border-radius: 4px;
+}
+.seat-row.exit-row::before,
+.seat-row.exit-row::after {
+  content: "EXIT ◀";
+  font-size: 8px;
+  font-weight: 800;
+  color: #ef4444;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.seat-row.exit-row::before { left: -42px; }
+.seat-row.exit-row::after { right: -42px; content: "▶ EXIT"; }
+
+.row-num-indicator {
+  width: 26px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  font-family: monospace;
+}
+
+.aisle-space {
+  width: 18px;
+  text-align: center;
+}
+
+.aircraft-seat {
+  width: 32px;
+  height: 34px;
+  border-radius: 6px 6px 3px 3px;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.aircraft-seat::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  width: 18px;
+  height: 4px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 2px;
+}
+
+/* Available */
+.aircraft-seat.seat-available {
+  background: #064e3b;
+  border: 1px solid #10b981;
+  color: #a7f3d0;
+}
+.aircraft-seat.seat-available:hover {
+  background: #047857;
+  border-color: #34d399;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+}
+
+/* Selected for current passenger */
+.aircraft-seat.seat-selected-active {
+  background: #0284c7 !important;
+  border: 2px solid #38bdf8 !important;
+  color: #ffffff !important;
+  transform: scale(1.08);
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.8) !important;
+  z-index: 2;
+  animation: pulseSeat 1.5s infinite;
+}
+
+/* Selected for other passenger in group */
+.aircraft-seat.seat-selected-other {
+  background: #6d28d9 !important;
+  border: 1px solid #c084fc !important;
+  color: #f5f3ff !important;
+  z-index: 1;
+}
+
+/* Booked / Occupied */
+.aircraft-seat.seat-booked {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #475569;
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.aircraft-seat.seat-booked:hover {
+  transform: none;
+  background: #1e293b;
+}
+
+@keyframes pulseSeat {
+  0%, 100% { box-shadow: 0 0 10px rgba(56, 189, 248, 0.8); }
+  50% { box-shadow: 0 0 20px rgba(56, 189, 248, 1); }
+}
+
+@media (max-width: 600px) {
+  .aircraft-seat {
+    width: 27px;
+    height: 30px;
+    font-size: 10px;
+  }
+  .aisle-space {
+    width: 10px;
+  }
+  .fuselage {
+    padding: 20px 8px 30px;
+  }
+}
+</style>
+
+<script>
+(function() {
+  // 1. Passport fields toggle
+  var isIntlRoute = {{ 'true' if is_international else 'false' }};
+  function checkPassportVisibility(fieldset) {
+    var natSelect = fieldset.querySelector('.nationality-select');
+    var passGroup = fieldset.querySelector('.passport-group');
+    if (!natSelect || !passGroup) return;
+
+    var isForeigner = natSelect.value !== 'India';
+    var passInput = passGroup.querySelector('input[name$="passport_number"]');
+
+    if (isIntlRoute || isForeigner) {
+      passGroup.style.display = 'grid';
+      if (passInput) passInput.required = true;
+    } else {
+      passGroup.style.display = 'none';
+      if (passInput) passInput.required = false;
+    }
+  }
+
+  document.querySelectorAll('.pax-fieldset').forEach(function(fs) {
+    var natSelect = fs.querySelector('.nationality-select');
+    if (natSelect) {
+      natSelect.addEventListener('change', function() {
+        checkPassportVisibility(fs);
+      });
+      checkPassportVisibility(fs);
+    }
+  });
+
+  // 2. Interactive Seat Selection Logic
+  var rawSeatMap = {{ seat_map_json|safe }};
+  var totalPax = {{ pax }};
+  var currentActivePax = 0; // 0-indexed
+
+  // Store seat selections per passenger: {0: '30A', 1: '30B'}
+  var paxSeatAssignments = {};
+
+  // Initialize from hidden inputs or suggested defaults
+  for (var i = 0; i < totalPax; i++) {
+    var input = document.querySelector('input[name="p-' + i + '-seat_number"]');
+    var val = input && input.value ? input.value.trim().toUpperCase() : '';
+    if (!val) {
+      val = rawSeatMap.available_seats && rawSeatMap.available_seats[i] ? rawSeatMap.available_seats[i] : '30A';
+      if (input) input.value = val;
+    }
+    paxSeatAssignments[i] = val;
+  }
+
+  // Render Seat Map DOM
+  function renderSeatMap() {
+    var container = document.getElementById('seatmap-sections-container');
+    if (!container || !rawSeatMap || !rawSeatMap.sections) return;
+    container.innerHTML = '';
+
+    rawSeatMap.sections.forEach(function(sec) {
+      var sectionDiv = document.createElement('div');
+      sectionDiv.className = 'cabin-section-box';
+
+      // Section header
+      var headerDiv = document.createElement('div');
+      headerDiv.className = 'cabin-title-divider';
+      headerDiv.innerHTML = '<hr><span>' + sec.title + ' (' + sec.subtitle + ')</span><hr>';
+      sectionDiv.appendChild(headerDiv);
+
+      var aislesAfter = sec.aisles_after || [];
+
+      // Rows
+      sec.rows.forEach(function(rowObj) {
+        var rowDiv = document.createElement('div');
+        rowDiv.className = 'seat-row' + (rowObj.is_exit ? ' exit-row' : '');
+
+        // Row number left
+        var rowNumLeft = document.createElement('span');
+        rowNumLeft.className = 'row-num-indicator';
+        rowNumLeft.textContent = rowObj.row_number;
+        rowDiv.appendChild(rowNumLeft);
+
+        // Seats in row
+        rowObj.seats.forEach(function(seat) {
+          var seatBtn = document.createElement('div');
+          seatBtn.className = 'aircraft-seat';
+          seatBtn.setAttribute('data-seat', seat.code);
+          seatBtn.setAttribute('data-cabin', seat.cabin);
+          seatBtn.setAttribute('data-type', seat.type);
+          seatBtn.setAttribute('data-exit', seat.is_exit);
+          seatBtn.setAttribute('data-booked', seat.is_booked);
+
+          var displayCode = seat.col; // e.g. "A"
+          seatBtn.innerHTML = '<span>' + displayCode + '</span>';
+
+          // Determine class/status
+          updateSeatElementVisual(seatBtn, seat.code, seat.is_booked);
+
+          // Click handler
+          seatBtn.addEventListener('click', function() {
+            handleSeatClick(seat);
+          });
+
+          rowDiv.appendChild(seatBtn);
+
+          // Aisle space
+          if (aislesAfter.indexOf(seat.col) !== -1) {
+            var aisle = document.createElement('div');
+            aisle.className = 'aisle-space';
+            rowDiv.appendChild(aisle);
+          }
+        });
+
+        // Row number right
+        var rowNumRight = document.createElement('span');
+        rowNumRight.className = 'row-num-indicator';
+        rowNumRight.textContent = rowObj.row_number;
+        rowDiv.appendChild(rowNumRight);
+
+        sectionDiv.appendChild(rowDiv);
+      });
+
+      container.appendChild(sectionDiv);
+    });
+
+    updateAllBadges();
+  }
+
+  function updateSeatElementVisual(seatBtn, seatCode, isBooked) {
+    seatBtn.classList.remove('seat-available', 'seat-booked', 'seat-selected-active', 'seat-selected-other');
+
+    if (isBooked) {
+      seatBtn.classList.add('seat-booked');
+      seatBtn.title = 'Seat ' + seatCode + ' is already booked';
+      return;
+    }
+
+    // Check if selected by current active passenger
+    if (paxSeatAssignments[currentActivePax] === seatCode) {
+      seatBtn.classList.add('seat-selected-active');
+      seatBtn.title = 'Seat ' + seatCode + ' - Selected by Passenger ' + (currentActivePax + 1);
+      return;
+    }
+
+    // Check if selected by another passenger in this group
+    var otherPaxIdx = -1;
+    for (var p = 0; p < totalPax; p++) {
+      if (p !== currentActivePax && paxSeatAssignments[p] === seatCode) {
+        otherPaxIdx = p;
+        break;
+      }
+    }
+
+    if (otherPaxIdx !== -1) {
+      seatBtn.classList.add('seat-selected-other');
+      seatBtn.title = 'Seat ' + seatCode + ' - Selected by Passenger ' + (otherPaxIdx + 1);
+      return;
+    }
+
+    // Available
+    seatBtn.classList.add('seat-available');
+    seatBtn.title = 'Seat ' + seatCode + ' - Available (Click to Select)';
+  }
+
+  function handleSeatClick(seat) {
+    var statusBar = document.getElementById('seat-status-message');
+    var statusIcon = document.getElementById('seat-status-icon');
+
+    // If booked
+    if (seat.is_booked) {
+      if (statusBar) statusBar.innerHTML = '<strong style="color: #ef4444;">Seat ' + seat.code + ' is already booked!</strong> Please choose another available seat.';
+      if (statusIcon) statusIcon.textContent = '🚫';
+      return;
+    }
+
+    // Assign seat to current active passenger
+    paxSeatAssignments[currentActivePax] = seat.code;
+
+    // Update hidden form input
+    var hiddenInput = document.querySelector('input[name="p-' + currentActivePax + '-seat_number"]');
+    if (hiddenInput) hiddenInput.value = seat.code;
+
+    // Refresh visuals
+    document.querySelectorAll('.aircraft-seat').forEach(function(btn) {
+      var code = btn.getAttribute('data-seat');
+      var booked = btn.getAttribute('data-booked') === 'true';
+      updateSeatElementVisual(btn, code, booked);
+    });
+
+    updateAllBadges();
+
+    if (statusBar) {
+      statusBar.innerHTML = '<strong style="color: #10b981;">Seat ' + seat.code + ' (' + seat.type + ')</strong> assigned to Passenger ' + (currentActivePax + 1) + '!';
+      if (statusIcon) statusIcon.textContent = '✅';
+    }
+
+    // If multiple passengers, auto-advance to next unseated or next passenger
+    if (totalPax > 1) {
+      var nextUnseated = -1;
+      for (var k = 0; k < totalPax; k++) {
+        if (!paxSeatAssignments[k]) {
+          nextUnseated = k;
+          break;
+        }
+      }
+      if (nextUnseated !== -1 && nextUnseated !== currentActivePax) {
+        setTimeout(function() {
+          setActivePassenger(nextUnseated);
+        }, 300);
+      }
+    }
+  }
+
+  function setActivePassenger(index) {
+    currentActivePax = index;
+
+    // Update passenger tabs
+    document.querySelectorAll('.pax-tab-btn').forEach(function(tab, idx) {
+      if (idx === index) {
+        tab.classList.add('active');
+      } else {
+        tab.classList.remove('active');
+      }
+    });
+
+    // Update seat map visual focus
+    document.querySelectorAll('.aircraft-seat').forEach(function(btn) {
+      var code = btn.getAttribute('data-seat');
+      var booked = btn.getAttribute('data-booked') === 'true';
+      updateSeatElementVisual(btn, code, booked);
+    });
+
+    var statusBar = document.getElementById('seat-status-message');
+    var statusIcon = document.getElementById('seat-status-icon');
+    if (statusBar) {
+      statusBar.innerHTML = 'Now selecting seat for <strong style="color: #38bdf8;">Passenger ' + (index + 1) + '</strong>. Current seat: <strong style="color:#fff;">' + (paxSeatAssignments[index] || 'None') + '</strong>';
+      if (statusIcon) statusIcon.textContent = '👤';
+    }
+  }
+
+  function updateAllBadges() {
+    for (var i = 0; i < totalPax; i++) {
+      var seatVal = paxSeatAssignments[i] || 'None';
+      var badge = document.getElementById('pax-seat-display-' + i);
+      if (badge) badge.textContent = 'Seat ' + seatVal;
+
+      var tabTag = document.getElementById('tab-seat-tag-' + i);
+      if (tabTag) tabTag.textContent = seatVal;
+    }
+  }
+
+  // Passenger switcher tab clicks
+  document.querySelectorAll('.pax-tab-btn').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      var idx = parseInt(tab.getAttribute('data-pax-index'), 10);
+      setActivePassenger(idx);
+    });
+  });
+
+  // "Change Seat on Map" button inside passenger cards
+  document.querySelectorAll('.trigger-seatmap-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var idx = parseInt(btn.getAttribute('data-pax-index'), 10);
+      setActivePassenger(idx);
+      var mapEl = document.getElementById('seatmap-section');
+      if (mapEl) {
+        mapEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+
+  // Auto assign next best seats button
+  var autoBtn = document.getElementById('auto-assign-all-btn');
+  if (autoBtn && rawSeatMap.available_seats) {
+    autoBtn.addEventListener('click', function() {
+      var used = [];
+      for (var i = 0; i < totalPax; i++) {
+        var seatCandidate = rawSeatMap.available_seats.find(function(s) {
+          return used.indexOf(s) === -1;
+        });
+        if (seatCandidate) {
+          used.push(seatCandidate);
+          paxSeatAssignments[i] = seatCandidate;
+          var hiddenInput = document.querySelector('input[name="p-' + i + '-seat_number"]');
+          if (hiddenInput) hiddenInput.value = seatCandidate;
+        }
+      }
+      document.querySelectorAll('.aircraft-seat').forEach(function(btn) {
+        var code = btn.getAttribute('data-seat');
+        var booked = btn.getAttribute('data-booked') === 'true';
+        updateSeatElementVisual(btn, code, booked);
+      });
+      updateAllBadges();
+      var statusBar = document.getElementById('seat-status-message');
+      if (statusBar) statusBar.innerHTML = '<strong style="color: #38bdf8;">Auto-assigned next available seats for all passengers!</strong>';
+    });
+  }
+
+  // Initial render
+  renderSeatMap();
+})();
+</script>
+{% endblock %}

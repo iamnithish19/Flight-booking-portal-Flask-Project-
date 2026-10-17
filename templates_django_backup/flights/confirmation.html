@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load flight_extras %}
+{% block title %}Booking {{ booking.reference }}{% endblock %}
+{% block body_class %}theme-dark{% endblock %}
+{% block content %}
+<main class="dark-layout">
+  <div class="dark-form">
+    <p class="ok">Booking confirmed</p>
+    <h2>Reference {{ booking.reference }}</h2>
+    <p>{{ booking.airline_name }} {{ booking.flight_number }} · {{ booking.dep_airport|default:booking.dep_iata }} → {{ booking.arr_airport|default:booking.arr_iata }}</p>
+
+    {% if booking.snapshot.concession_badge %}
+    <div class="concession-alert-banner"
+      style="background: rgba(14, 165, 233, 0.15); border: 1px solid rgba(14, 165, 233, 0.4); border-radius: 8px; padding: 12px 16px; margin: 16px 0; display: flex; align-items: center; gap: 12px;">
+      <span style="font-size: 22px;">🎫</span>
+      <div style="font-size: 13.5px; color: #bae6fd;">
+        <strong style="color: #38bdf8; display: block; font-size: 14px;">{{ booking.snapshot.concession_badge }} Applied</strong>
+        <span>{{ booking.snapshot.doc_required|default:"Please ensure all eligible passengers carry valid verification documents at the airport check-in counter." }}</span>
+      </div>
+    </div>
+    {% endif %}
+
+    <ul class="plist">
+      {% for p in booking.passengers.all %}
+      <li style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0;">
+        <span>{{ p.first_name }} {{ p.last_name }}</span>
+        <span
+          style="background: rgba(45, 212, 191, 0.15); color: #2dd4bf; border: 1px solid rgba(45, 212, 191, 0.3); border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 700;">
+          Seat {{ p.seat_number|default:"8A" }} · {{ p.boarding_zone|default:"Zone 3" }}
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+
+    <div class="bp-quick-actions" style="display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
+      <a class="btn btn-teal" href="{% url 'boarding_pass_pdf' booking.reference %}" download>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          style="vertical-align: -2px; margin-right: 4px;">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        Download Boarding Pass (PDF)
+      </a>
+      <a class="btn btn-ghost-dark" href="{% url 'boarding_pass_view' booking.reference %}">
+        View Boarding Pass
+      </a>
+    </div>
+
+    <p class="fine">Flight details below were saved when you booked. For the latest live status, open the flight from My
+      bookings.</p>
+    <div class="fc-actions" style="margin-top: 15px;">
+      <a class="btn btn-mint" href="{% url 'my_bookings' %}">My bookings</a>
+      {% if return_qs %}<a class="btn btn-ghost-dark" href="{% url 'search' %}?{{ return_qs }}">Search return
+        flights</a>{% endif %}
+    </div>
+  </div>
+  <aside class="summary">
+    <h3>Saved flight details</h3>
+    <div class="sum-route"><b>{{ booking.dep_iata }}</b><span>→</span><b>{{ booking.arr_iata }}</b></div>
+    <dl>
+      <dt>Date</dt>
+      <dd>{{ booking.dep_date|date:"d M Y" }}</dd>
+      <dt>Scheduled departure</dt>
+      <dd>{{ booking.scheduled_departure|isotime }}</dd>
+      <dt>Scheduled arrival</dt>
+      <dd>{{ booking.scheduled_arrival|isotime }}</dd>
+      <dt>Terminal / gate</dt>
+      <dd>{{ booking.dep_terminal|default:"—" }} / {{ booking.dep_gate|default:"—" }}</dd>
+      <dt>Aircraft</dt>
+      <dd>{{ booking.aircraft|default:"—" }}</dd>
+      <dt>Status when booked</dt>
+      <dd>{{ booking.status_at_booking|status_label }}</dd>
+    </dl>
+  </aside>
+</main>
+{% endblock %}

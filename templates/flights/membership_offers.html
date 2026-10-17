@@ -1,0 +1,443 @@
+{% extends "base.html" %}
+{% block title %}Regular Membership Offers &amp; Member Perks — Airvoyage{% endblock %}
+{% block body_class %}page-membership-offers theme-dark{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/concepts.css') }}">
+<style>
+  .offers-hero {
+    text-align: center;
+    padding: 80px 4vw 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .offers-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(2, 132, 199, 0.2);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    color: #38bdf8;
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .offers-title {
+    font-size: clamp(2.2rem, 4.5vw, 3.2rem);
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 14px;
+    line-height: 1.2;
+  }
+  .offers-subtitle {
+    font-size: 1.1rem;
+    color: #94a3b8;
+    max-width: 760px;
+    margin: 0 auto 30px;
+    line-height: 1.6;
+  }
+  .lookup-box {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    border-radius: 20px;
+    padding: 24px;
+    max-width: 720px;
+    margin: 0 auto 40px;
+    text-align: left;
+  }
+  .lookup-input-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .lookup-input {
+    flex: 1;
+    background: #060d19;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.2s;
+  }
+  .lookup-input:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+  }
+  .member-card-result {
+    background: linear-gradient(135deg, rgba(14, 116, 144, 0.25) 0%, rgba(15, 23, 42, 0.95) 100%);
+    border: 1px solid rgba(45, 212, 191, 0.4);
+    border-radius: 18px;
+    padding: 24px;
+    margin-top: 24px;
+    animation: fadeIn 0.3s ease;
+  }
+  .member-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .member-name-badge h3 {
+    margin: 0 0 4px;
+    font-size: 1.4rem;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .member-data-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .mdata-item {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 10px 14px;
+    border-radius: 10px;
+  }
+  .mdata-label {
+    display: block;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 700;
+  }
+  .mdata-val {
+    font-size: 0.95rem;
+    color: #f1f5f9;
+    font-weight: 600;
+  }
+  .offer-perks-box {
+    background: rgba(2, 132, 199, 0.12);
+    border: 1px dashed rgba(56, 189, 248, 0.4);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .offer-perks-title {
+    color: #38bdf8;
+    font-size: 0.92rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .offer-perks-list {
+    margin: 0;
+    padding-left: 18px;
+    color: #cbd5e1;
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+  .perks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin: 40px auto 60px;
+    max-width: 1200px;
+  }
+  .perk-card {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    padding: 24px;
+    text-align: left;
+    transition: transform 0.2s;
+  }
+  .perk-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(56, 189, 248, 0.4);
+  }
+  .perk-icon {
+    font-size: 2.2rem;
+    margin-bottom: 12px;
+  }
+  .perk-card h3 {
+    font-size: 1.15rem;
+    color: #f8fafc;
+    margin-bottom: 8px;
+  }
+  .perk-card p {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0;
+  }
+  .members-table-wrap {
+    max-width: 1200px;
+    margin: 0 auto 60px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    padding: 24px;
+  }
+</style>
+
+<main class="membership-offers-container" style="max-width: 1280px; margin: 0 auto; padding: 20px 4vw 80px;">
+  <!-- Hero Section -->
+  <header class="offers-hero">
+    <div class="offers-badge">
+      <span>⭐</span> Airvoyage Loyalty &amp; Concessions Program
+    </div>
+    <h1 class="offers-title">Exclusive Regular Membership Offer</h1>
+    <p class="offers-subtitle">
+      Special 15% fare discount, free preferred seat selection, extra baggage, and zero cancellation fee guarantees for persons registered in our MongoDB passenger registry.
+    </p>
+
+    <!-- Live Passenger Details Lookup Form -->
+    <div class="lookup-box">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 0.84rem; font-weight: 700; color: #38bdf8; text-transform: uppercase;">
+          🔍 Fetch Member Details From MongoDB
+        </span>
+        <span style="font-size: 0.78rem; color: #64748b;">Collection: <code>flights_passenger</code></span>
+      </div>
+      <p style="font-size: 0.88rem; color: #94a3b8; margin: 6px 0 0;">
+        Enter your Name (e.g. <strong>Nithish</strong>), Email (<strong>nithish@gmail.com</strong>), Phone (<strong>9876543210</strong>), or Booking ID (<strong>AV1001</strong>):
+      </p>
+
+      <form id="member-lookup-form" onsubmit="event.preventDefault(); fetchMemberDetails();">
+        <div class="lookup-input-group">
+          <input type="text" id="member-search-input" class="lookup-input" placeholder="Try 'Nithish', 'nithish@gmail.com', or 'AV1001'..." value="{{ search_q|default('Nithish') }}">
+          <button type="submit" class="btn btn-teal" id="btn-fetch-member" style="padding: 12px 24px; font-weight: 700;">
+            Fetch Details
+          </button>
+        </div>
+      </form>
+
+      <!-- Member Details Result Card -->
+      <div id="member-result-container">
+        <!-- Rendered dynamically by JS or pre-rendered if searched_member -->
+      </div>
+    </div>
+  </header>
+
+  <!-- 6 Core Privileges of the Regular Membership Offer -->
+  <section class="perks-grid">
+    <div class="perk-card">
+      <div class="perk-icon">🎫</div>
+      <h3>Flat 15% Base Fare Discount</h3>
+      <p>Save instantly on any domestic or international flight using the <strong>Regular Member</strong> concession option.</p>
+    </div>
+
+    <div class="perk-card">
+      <div class="perk-icon">💺</div>
+      <h3>Free Preferred Seat Allocation</h3>
+      <p>Complimentary window or aisle seat pre-selection (e.g. Seat 12A) with zero seat selection charges.</p>
+    </div>
+
+    <div class="perk-card">
+      <div class="perk-icon">🧳</div>
+      <h3>Extra 10 kg Check-in Baggage</h3>
+      <p>Enjoy +10 kg complimentary check-in baggage on top of standard airline baggage allowances.</p>
+    </div>
+
+    <div class="perk-card">
+      <div class="perk-icon">🔄</div>
+      <h3>DGCA 2026 & Member Zero Cancellation</h3>
+      <p>Benefit from DGCA's statutory 48-hour free look-in cancellation/amendment window (for domestic departures ≥7 days, international ≥15 days away), augmented with Airvoyage Member 100% full refund guarantee up to 2 hours before flight.</p>
+    </div>
+
+    <div class="perk-card">
+      <div class="perk-icon">⚡</div>
+      <h3>Priority Boarding Zone</h3>
+      <p>Fast-track boarding clearance with Zone 2 boarding privileges to settle in comfortably before departure.</p>
+    </div>
+
+    <div class="perk-card">
+      <div class="perk-icon">☕</div>
+      <h3>Complimentary In-Flight Service</h3>
+      <p>Enjoy complimentary snack hampers and hot beverage service on all flights operated by participating carriers.</p>
+    </div>
+  </section>
+
+  <!-- Inserted MongoDB Passengers Registry Table -->
+  <section class="members-table-wrap">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <h2 style="font-size: 1.3rem; color: #fff; margin: 0 0 4px;">MongoDB Inserted Passengers &amp; Member Offers</h2>
+        <p style="font-size: 0.85rem; color: #94a3b8; margin: 0;">Live documents fetched from MongoDB <code>flights_passenger</code> collection with active Regular Membership Offers.</p>
+      </div>
+      <button class="btn btn-sm btn-ghost-dark" onclick="reloadMembersTable()">🔄 Refresh MongoDB List</button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="profile-table" style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+        <thead>
+          <tr style="text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: #64748b;">
+            <th style="padding: 10px 12px;">Booking ID</th>
+            <th style="padding: 10px 12px;">Passenger Name</th>
+            <th style="padding: 10px 12px;">Contact Details</th>
+            <th style="padding: 10px 12px;">Flight &amp; Route</th>
+            <th style="padding: 10px 12px;">Seat</th>
+            <th style="padding: 10px 12px;">Offer Status</th>
+            <th style="padding: 10px 12px;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="members-table-body">
+          {% for m in all_members %}
+          <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: #cbd5e1;">
+            <td style="padding: 12px;"><code style="color: #38bdf8;">{{ m.booking_id }}</code></td>
+            <td style="padding: 12px;"><strong style="color: #fff;">{{ m.name }}</strong></td>
+            <td style="padding: 12px;">
+              <div>{{ m.email }}</div>
+              <small style="color: #64748b;">{{ m.phone }}</small>
+            </td>
+            <td style="padding: 12px;">
+              <strong>{{ m.flight_number }}</strong> · {{ m.airline }}<br>
+              <small style="color: #94a3b8;">{{ m.source }} &rarr; {{ m.destination }}</small>
+            </td>
+            <td style="padding: 12px;"><span style="background: rgba(45, 212, 191, 0.15); color: #2dd4bf; padding: 2px 8px; border-radius: 6px; font-weight: 700;">{{ m.seat_number }}</span></td>
+            <td style="padding: 12px;"><span style="background: rgba(14, 116, 144, 0.25); color: #38bdf8; border: 1px solid rgba(14, 116, 144, 0.5); padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;">15% OFF Active</span></td>
+            <td style="padding: 12px;">
+              <button class="btn btn-sm btn-teal" onclick="selectMemberForSearch('{{ m.name }}', '{{ m.email }}')" style="padding: 4px 10px; font-size: 12px;">
+                Use Offer
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script>
+  function fetchMemberDetails() {
+    var q = document.getElementById("member-search-input").value.trim();
+    var btn = document.getElementById("btn-fetch-member");
+    var container = document.getElementById("member-result-container");
+    if (!q) return;
+
+    btn.textContent = "Fetching...";
+    btn.disabled = true;
+
+    fetch("/api/membership/lookup?q=" + encodeURIComponent(q))
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        btn.textContent = "Fetch Details";
+        btn.disabled = false;
+
+        if (data.found && data.member) {
+          var m = data.member;
+          container.innerHTML = `
+            <div class="member-card-result">
+              <div class="member-header-row">
+                <div class="member-name-badge">
+                  <h3>
+                    <span>👤</span> ${m.name}
+                    <span style="background: rgba(14, 116, 144, 0.3); color: #38bdf8; border: 1px solid #0e7490; font-size: 12px; padding: 2px 10px; border-radius: 999px; font-weight: 700;">
+                      ★ ${m.tier}
+                    </span>
+                  </h3>
+                  <div style="color: #94a3b8; font-size: 0.85rem;">
+                    Booking Ref: <code style="color: #38bdf8;">${m.booking_id}</code> &middot; Passport: <strong>${m.passport || 'P1234567'}</strong>
+                  </div>
+                </div>
+                <a href="/search/?source=${encodeURIComponent(m.source || 'MAA')}&destination=${encodeURIComponent(m.destination || 'DEL')}&fare_type=regular_member" class="btn btn-teal btn-sm" style="font-weight: 700;">
+                  ✈️ Apply 15% Member Offer to Search
+                </a>
+              </div>
+
+              <div class="member-data-grid">
+                <div class="mdata-item">
+                  <span class="mdata-label">Email Address</span>
+                  <span class="mdata-val">${m.email}</span>
+                </div>
+                <div class="mdata-item">
+                  <span class="mdata-label">Phone Number</span>
+                  <span class="mdata-val">${m.phone}</span>
+                </div>
+                <div class="mdata-item">
+                  <span class="mdata-label">Flight Details</span>
+                  <span class="mdata-val">${m.flight_number} (${m.airline})</span>
+                </div>
+                <div class="mdata-item">
+                  <span class="mdata-label">Route</span>
+                  <span class="mdata-val">${m.source} &rarr; ${m.destination}</span>
+                </div>
+                <div class="mdata-item">
+                  <span class="mdata-label">Preferred Seat</span>
+                  <span class="mdata-val" style="color: #2dd4bf;">Seat ${m.seat_number} (${m.boarding_zone || 'Zone 2'})</span>
+                </div>
+                <div class="mdata-item">
+                  <span class="mdata-label">Offer Promo Code</span>
+                  <span class="mdata-val" style="color: #f59e0b;">${m.offer.discount_code}</span>
+                </div>
+              </div>
+
+              <div class="offer-perks-box">
+                <div class="offer-perks-title">🎁 Active Perks Under Your Regular Membership Offer:</div>
+                <ul class="offer-perks-list">
+                  ${m.offer.perks.map(function(p) { return '<li>' + p + '</li>'; }).join('')}
+                </ul>
+              </div>
+            </div>
+          `;
+        } else {
+          container.innerHTML = `
+            <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); padding: 14px; border-radius: 12px; margin-top: 20px; color: #fca5a5; font-size: 0.9rem;">
+              No record found in MongoDB for "${q}". Try searching for <strong>Nithish</strong>, <strong>nithish@gmail.com</strong>, or <strong>AV1001</strong>.
+            </div>
+          `;
+        }
+      })
+      .catch(function(err) {
+        btn.textContent = "Fetch Details";
+        btn.disabled = false;
+        container.innerHTML = `<div style="color: #ef4444; margin-top: 14px;">Error fetching details: ${err}</div>`;
+      });
+  }
+
+  function selectMemberForSearch(name, email) {
+    document.getElementById("member-search-input").value = name;
+    fetchMemberDetails();
+    window.scrollTo({ top: 120, behavior: "smooth" });
+  }
+
+  function reloadMembersTable() {
+    fetch("/api/membership/all-members")
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        var tbody = document.getElementById("members-table-body");
+        if (!tbody || !data.members) return;
+        tbody.innerHTML = data.members.map(function(m) {
+          return `
+            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: #cbd5e1;">
+              <td style="padding: 12px;"><code style="color: #38bdf8;">${m.booking_id}</code></td>
+              <td style="padding: 12px;"><strong style="color: #fff;">${m.name}</strong></td>
+              <td style="padding: 12px;">
+                <div>${m.email}</div>
+                <small style="color: #64748b;">${m.phone}</small>
+              </td>
+              <td style="padding: 12px;">
+                <strong>${m.flight_number}</strong> · ${m.airline}<br>
+                <small style="color: #94a3b8;">${m.source} &rarr; ${m.destination}</small>
+              </td>
+              <td style="padding: 12px;"><span style="background: rgba(45, 212, 191, 0.15); color: #2dd4bf; padding: 2px 8px; border-radius: 6px; font-weight: 700;">${m.seat_number}</span></td>
+              <td style="padding: 12px;"><span style="background: rgba(14, 116, 144, 0.25); color: #38bdf8; border: 1px solid rgba(14, 116, 144, 0.5); padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;">15% OFF Active</span></td>
+              <td style="padding: 12px;">
+                <button class="btn btn-sm btn-teal" onclick="selectMemberForSearch('${m.name}', '${m.email}')" style="padding: 4px 10px; font-size: 12px;">
+                  Use Offer
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      });
+  }
+
+  // Auto-fetch on page load for the prefilled member
+  document.addEventListener("DOMContentLoaded", function() {
+    fetchMemberDetails();
+  });
+</script>
+{% endblock %}

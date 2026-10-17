@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% block title %}My Profile · {{ profile.full_name }}{% endblock %}
+
+{% block content %}
+<main class="profile-page-container">
+  <!-- Profile Header Card -->
+  <div class="profile-hero-card">
+    <div class="profile-hero-left">
+      <div class="profile-avatar-circle">
+        {{ profile.full_name[:1]|upper }}
+      </div>
+      <div class="profile-hero-info">
+        <div class="profile-badge-row">
+          <span class="membership-tier-badge" style="background: {{ profile.membership_tier.bg }}; color: {{ profile.membership_tier.color }}; border: 1px solid {{ profile.membership_tier.color }}40;">
+            ★ {{ profile.membership_tier.name }}
+          </span>
+          <span class="profile-class-pill">{{ profile.preferred_class }}</span>
+        </div>
+        <h1 class="profile-name">{{ profile.full_name }}</h1>
+        <div class="profile-sub-meta">
+          <span>📧 {{ user.email|default("No email added") }}</span>
+          {% if profile.phone %}
+            <span class="meta-dot">·</span>
+            <span>📱 {{ profile.phone }}</span>
+          {% endif %}
+          {% if profile.home_airport %}
+            <span class="meta-dot">·</span>
+            <span>🛫 Home: <strong>{{ profile.home_airport }}</strong></span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="profile-hero-actions">
+      <a href="{{ url_for('profile_edit') }}" class="btn btn-primary-gradient">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Edit Profile
+      </a>
+      <a href="{{ url_for('my_bookings') }}" class="btn btn-outline-dark">
+        My Bookings
+      </a>
+    </div>
+  </div>
+
+  <!-- Key Statistics Counter Cards -->
+  <div class="profile-stats-grid">
+    <div class="pstat-card">
+      <span class="pstat-icon">🎫</span>
+      <div>
+        <div class="pstat-val">{{ total_bookings }}</div>
+        <div class="pstat-lbl">Total Bookings</div>
+      </div>
+    </div>
+    <div class="pstat-card">
+      <span class="pstat-icon">🛫</span>
+      <div>
+        <div class="pstat-val">{{ upcoming_count }}</div>
+        <div class="pstat-lbl">Upcoming Flights</div>
+      </div>
+    </div>
+    <div class="pstat-card">
+      <span class="pstat-icon">🛬</span>
+      <div>
+        <div class="pstat-val">{{ past_count }}</div>
+        <div class="pstat-lbl">Completed Trips</div>
+      </div>
+    </div>
+    <div class="pstat-card">
+      <span class="pstat-icon">💺</span>
+      <div>
+        <div class="pstat-val" style="font-size: 18px;">{{ profile.preferred_class }}</div>
+        <div class="pstat-lbl">Preferred Cabin</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Regular Membership Offer Banner -->
+  <div class="regular-member-offer-card" style="background: linear-gradient(135deg, rgba(2, 132, 199, 0.2) 0%, rgba(15, 23, 42, 0.9) 100%); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 16px; padding: 20px 24px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+    <div style="max-width: 700px;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+        <span style="font-size: 20px;">⭐</span>
+        <strong style="color: #38bdf8; font-size: 16px; text-transform: uppercase; letter-spacing: 0.03em;">Active Regular Membership Offer</strong>
+        <span style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Verified Passenger</span>
+      </div>
+      <p style="color: #cbd5e1; font-size: 14px; margin: 0 0 10px; line-height: 1.5;">
+        As a valued member registered in our MongoDB passenger registry, you are eligible for <strong>15% OFF</strong> on all upcoming flights, complimentary seat reservation, +10kg baggage, and zero cancellation fee guarantees.
+      </p>
+      <div style="display: flex; gap: 12px; font-size: 12.5px; color: #94a3b8; flex-wrap: wrap;">
+        <span>Promo Code: <strong style="color: #f59e0b;">REGULAR15</strong></span>
+        <span>&middot;</span>
+        <span>Seat Benefit: <strong style="color: #2dd4bf;">Free Preferred Seat</strong></span>
+        <span>&middot;</span>
+        <span>Cancellation Protection: <strong style="color: #38bdf8;">100% Refundable</strong></span>
+      </div>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <a href="{{ url_for('membership_offers') }}" class="btn btn-outline-dark" style="font-size: 13px; padding: 8px 16px;">
+        View Offer Details
+      </a>
+      <a href="{{ url_for('search') }}?fare_type=regular_member" class="btn btn-teal" style="font-size: 13px; padding: 8px 18px; font-weight: 700;">
+        Book With 15% OFF
+      </a>
+    </div>
+  </div>
+
+  <!-- Two Column Profile Details -->
+  <div class="profile-details-grid">
+    <!-- Left Column: Personal & Contact -->
+    <div class="profile-section-card">
+      <div class="profile-section-header">
+        <h3>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -3px; margin-right: 8px; color: #0284c7;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Personal &amp; Contact Information
+        </h3>
+        <a href="{{ url_for('profile_edit') }}" class="edit-link">Edit</a>
+      </div>
+      <div class="profile-info-list">
+        <div class="pinfo-row">
+          <span class="pinfo-label">Username</span>
+          <span class="pinfo-val"><code>{{ user.username }}</code></span>
+        </div>
+        <div class="pinfo-row">
+          <span class="pinfo-label">Full Name</span>
+          <span class="pinfo-val">{{ profile.full_name }}</span>
+        </div>
+        <div class="pinfo-row">
+          <span class="pinfo-label">Email Address</span>
+          <span class="pinfo-val">{{ user.email|default("—") }}</span>
+        </div>
+        <div class="pinfo-row">
+          <span class="pinfo-label">Phone Number</span>
+          <span class="pinfo-val">{{ profile.phone|default("Not added") }}</span>
+        </div>
+        <div class="pinfo-row">
+          <span class="pinfo-label">Date of Birth</span>
+          <span class="pinfo-val">{{ profile.date_of_birth|date("d M Y")|default("Not specified") }}</span>
+        </div>
+        <div class="pinfo-row">
+          <span class="pinfo-label">Gender</span>
+          <span class="pinfo-val">
+            {% if profile.gender == "M" %}Male
+            {% elif profile.gender == "F" %}Female
+            {% elif profile.gender == "X" %}Other / Unspecified
+            {% else %}Not specified{% endif %}
+          </span>
+        </div>
+        <div class="pinfo-row">
+          <span class="pinfo-label">City / Address</span>
+          <span class="pinfo-val">{{ profile.address|default("Not specified") }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Travel Identity & Passport Credentials -->
+    <div class="profile-section-card">
+      <div class="profile-section-header">
+        <h3>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -3px; margin-right: 8px; color: #059669;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Travel Identity &amp; Passport Details
+        </h3>
+        <a href="{{ url_for('profile_edit') }}" class="edit-link">Edit</a>
+      </div>
+      <div class="profile-info-list">
+        <div class="pinfo-row">
+          <span class="pinfo-label">Nationality</span>
+          <span class="pinfo-val"><strong>{{ profile.nationality|default("India") }}</strong></span>
+        </div>
+        <div class="pinfo-row">
+          <span class="pinfo-label">Passport Number</span>
+          <span class="pinfo-val">
+            {% if profile.passport_number %}
+              <span class="passport-badge">🛂 {{ profile.passport_number }}</span>
+            {% else %}
+              <span class="text-muted-tag">Not added (Domestic Only)</span>
+            {% endif %}
+          </span>
+        </div>
+        <div class="pinfo-row">
+          <span class="pinfo-label">Passport Expiry</span>
+          <span class="pinfo-val">{{ profile.passport_expiry|date("d M Y")|default("—") }}</span>
+        </div>
+        <div class="pinfo-row">
+          <span class="pinfo-label">International Status</span>
+          <span class="pinfo-val">
+            {% if profile.passport_number %}
+              <span class="status-pill status-ready">✓ Ready for International Flights</span>
+            {% else %}
+              <span class="status-pill status-warning">⚠ Add passport for overseas trips</span>
+            {% endif %}
+          </span>
+        </div>
+        <div class="pinfo-row">
+          <span class="pinfo-label">Frequent Flyer ID</span>
+          <span class="pinfo-val">{{ profile.frequent_flyer_number|default("None") }}</span>
+        </div>
+        <div class="pinfo-row">
+          <span class="pinfo-label">Preferred Class</span>
+          <span class="pinfo-val"><strong style="color: #0284c7;">{{ profile.preferred_class }}</strong></span>
+        </div>
+        <div class="pinfo-row">
+          <span class="pinfo-label">Home Base</span>
+          <span class="pinfo-val">{{ profile.home_airport|default("Not configured") }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Bookings Table inside Profile -->
+  <div class="profile-section-card" style="margin-top: 24px;">
+    <div class="profile-section-header">
+      <h3>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -3px; margin-right: 8px; color: #d97706;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Recent Bookings &amp; Passes
+      </h3>
+      {% if recent_bookings %}
+        <a href="{{ url_for('my_bookings') }}" class="edit-link">View All ({{ total_bookings }}) →</a>
+      {% endif %}
+    </div>
+
+    {% if recent_bookings %}
+      <div class="table-responsive">
+        <table class="profile-table">
+          <thead>
+            <tr>
+              <th>Reference</th>
+              <th>Flight</th>
+              <th>Route</th>
+              <th>Departure Date</th>
+              <th>Class</th>
+              <th>Passengers</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in recent_bookings %}
+            <tr>
+              <td><a href="{{ url_for('confirmation', reference=b.reference) }}" class="ref-link"><code>{{ b.reference }}</code></a></td>
+              <td><strong>{{ b.flight_number }}</strong> <small class="text-muted">({{ b.airline_name }})</small></td>
+              <td>
+                {{ b.dep_iata }} &rarr; {{ b.arr_iata }}
+                {% if b.is_connecting %}<span class="mini-badge">Via {{ b.stops_info|default("1-Stop") }}</span>{% endif %}
+              </td>
+              <td>{{ b.dep_date|date("d M Y") }}</td>
+              <td><span class="class-badge-sm">{{ b.travel_class|title }}</span></td>
+              <td>{{ b.passenger_count }} pax</td>
+              <td class="action-cell">
+                <a href="{{ url_for('boarding_pass_view', reference=b.reference) }}" class="btn-sm-action">Boarding Pass</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state-box">
+        <div style="font-size: 32px; margin-bottom: 8px;">✈️</div>
+        <h4>No flight bookings yet</h4>
+        <p>Book your next journey and your boarding passes &amp; e-tickets will appear right here.</p>
+        <a href="{{ url_for('home') }}" class="btn btn-primary-gradient" style="margin-top: 12px; display: inline-block;">Search Flights</a>
+      </div>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

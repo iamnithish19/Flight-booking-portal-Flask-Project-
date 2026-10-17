@@ -1,0 +1,61 @@
+<form class="glass-search" action="{% url 'search' %}" method="get" novalidate>
+  <label class="fld"><span>From</span>
+    <input name="source" list="airport-list" placeholder="Chennai (MAA)" value="{{ form.source.value|default:'' }}" autocomplete="off" required></label>
+  <button type="button" class="swap" data-swap aria-label="Swap origin and destination">⇄</button>
+  <label class="fld"><span>To</span>
+    <input name="destination" list="airport-list" placeholder="Delhi (DEL)" value="{{ form.destination.value|default:'' }}" autocomplete="off" required></label>
+  <label class="fld"><span>Departure</span>
+    <input type="date" name="departure_date" min="{{ today|date:'Y-m-d' }}" value="{{ form.departure_date.value|date:'Y-m-d'|default:form.departure_date.value }}" required></label>
+  <label class="fld"><span>Return (optional)</span>
+    <input type="date" name="return_date" min="{{ today|date:'Y-m-d' }}" value="{{ form.return_date.value|default:'' }}"></label>
+  <label class="fld fld-pax"><span>Passengers</span>
+    <input type="number" name="passengers" min="1" max="9" value="{{ form.passengers.value|default:1 }}" required></label>
+  <label class="fld fld-class"><span>Class</span>
+    <select name="travel_class" style="background: transparent; border: none; font-size: .95rem; font-weight: 600; color: inherit; outline: none; cursor: pointer; padding: 4px 0;">
+      <option value="economy" {% if form.travel_class.value == 'economy' or not form.travel_class.value %}selected{% endif %}>Economy</option>
+      <option value="premium_economy" {% if form.travel_class.value == 'premium_economy' %}selected{% endif %}>Premium Economy</option>
+      <option value="business" {% if form.travel_class.value == 'business' %}selected{% endif %}>Business Class</option>
+      <option value="first" {% if form.travel_class.value == 'first' %}selected{% endif %}>First Class</option>
+    </select>
+  </label>
+  <button class="btn btn-dark btn-lg" type="submit">Search Flights</button>
+
+  <!-- Special Concession / Fare Category Selection -->
+  <div class="concession-bar" style="grid-column: 1 / -1;">
+    <span class="cb-label">Special Fares (Concession):</span>
+    <div class="cb-options">
+      <label class="cb-pill {% if not form.fare_type.value or form.fare_type.value == 'regular' %}active{% endif %}">
+        <input type="radio" name="fare_type" value="regular" {% if not form.fare_type.value or form.fare_type.value == 'regular' %}checked{% endif %}>
+        <span class="cb-pill-inner">
+          <span class="cb-title">Regular Fare</span>
+          <span class="cb-sub">Standard Adult</span>
+        </span>
+      </label>
+      <label class="cb-pill {% if form.fare_type.value == 'student' %}active{% endif %}">
+        <input type="radio" name="fare_type" value="student" {% if form.fare_type.value == 'student' %}checked{% endif %}>
+        <span class="cb-pill-inner">
+          <span class="cb-title">🎓 Student</span>
+          <span class="cb-sub">12% OFF + Extra 10kg</span>
+        </span>
+      </label>
+      <label class="cb-pill {% if form.fare_type.value == 'doctor_nurse' %}active{% endif %}">
+        <input type="radio" name="fare_type" value="doctor_nurse" {% if form.fare_type.value == 'doctor_nurse' %}checked{% endif %}>
+        <span class="cb-pill-inner">
+          <span class="cb-title">🩺 Doctors &amp; Nurses</span>
+          <span class="cb-sub">10% OFF Medical Heroes</span>
+        </span>
+      </label>
+      <label class="cb-pill {% if form.fare_type.value == 'senior_citizen' %}active{% endif %}">
+        <input type="radio" name="fare_type" value="senior_citizen" {% if form.fare_type.value == 'senior_citizen' %}checked{% endif %}>
+        <span class="cb-pill-inner">
+          <span class="cb-title">👴 Senior Citizen</span>
+          <span class="cb-sub">15% OFF (Age 60+)</span>
+        </span>
+      </label>
+    </div>
+  </div>
+
+  <datalist id="airport-list">{% for code, city, name in airports %}<option value="{{ city }} ({{ code }})">{{ name }}</option>{% endfor %}</datalist>
+</form>
+{% if form.errors %}<ul class="form-errors">{% for f in form %}{% for e in f.errors %}<li>{{ f.label }}: {{ e }}</li>{% endfor %}{% endfor %}{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+

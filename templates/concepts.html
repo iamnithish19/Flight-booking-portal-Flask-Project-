@@ -1,0 +1,523 @@
+{% extends "base.html" %}
+{% block title %}System Architecture & Engineering Concepts — Airvoyage{% endblock %}
+{% block body_class %}page-concepts theme-dark{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/concepts.css') }}">
+
+<main class="concepts-container">
+  <!-- Top Hero Header -->
+  <header class="concepts-hero">
+    <div class="concepts-badge">
+      <span class="pulse-dot"></span> Engineering Reference &amp; Architecture Specification
+    </div>
+    <h1 class="concepts-title">Project Architecture &amp; Core Concepts</h1>
+    <p class="concepts-subtitle">
+      A comprehensive technical deep-dive into Airvoyage's hybrid database engine, MongoDB Embedded Document schema patterns, real-time live flight streaming, caching pipelines, and algorithmic boarding pass generation.
+    </p>
+
+    <!-- Live Status Quick Pill Bar -->
+    <div class="concepts-status-bar">
+      <div class="status-pill {% if mongo_status.connected %}status-mongo-ok{% else %}status-mongo-fallback{% endif %}">
+        <span class="status-icon">{% if mongo_status.connected %}🍃{% else %}💾{% endif %}</span>
+        <div class="status-text">
+          <label>Active Database Engine</label>
+          <strong>{% if mongo_status.connected %}MongoDB Atlas (NoSQL Embedded Docs){% else %}SQLite Engine (Relational Fallback){% endif %}</strong>
+        </div>
+      </div>
+
+      <div class="status-pill status-api-pill">
+        <span class="status-icon">✈️</span>
+        <div class="status-text">
+          <label>Live API Provider</label>
+          <strong>{{ active_provider|upper }} Adapter (Cached {{ cache_ttl }}s TTL)</strong>
+        </div>
+      </div>
+
+      <div class="status-pill status-pattern-pill">
+        <span class="status-icon">📦</span>
+        <div class="status-text">
+          <label>Data Pattern</label>
+          <strong>MongoDB Embedded Documents (Subdocuments)</strong>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Interactive Content Layout -->
+  <div class="concepts-layout">
+    <!-- Sidebar Concept Tabs Navigation -->
+    <nav class="concepts-nav" aria-label="Documentation Sections">
+      <div class="nav-sticky">
+        <span class="nav-heading">System Concepts</span>
+        <button class="concept-tab-btn active" data-tab="tab-embedded-docs">
+          <span class="tab-num">01</span>
+          <div class="tab-label">
+            <strong>MongoDB Embedded Docs</strong>
+            <small>Subdocuments vs References</small>
+          </div>
+        </button>
+
+        <button class="concept-tab-btn" data-tab="tab-dual-db">
+          <span class="tab-num">02</span>
+          <div class="tab-label">
+            <strong>Hybrid Database Engine</strong>
+            <small>MongoDB Atlas + SQLite Fallback</small>
+          </div>
+        </button>
+
+        <button class="concept-tab-btn" data-tab="tab-live-api">
+          <span class="tab-num">03</span>
+          <div class="tab-label">
+            <strong>Real-Time API &amp; Caching</strong>
+            <small>Provider Pattern &amp; 30s TTL</small>
+          </div>
+        </button>
+
+        <button class="concept-tab-btn" data-tab="tab-boarding">
+          <span class="tab-num">04</span>
+          <div class="tab-label">
+            <strong>Seat Matrix &amp; Boarding Passes</strong>
+            <small>Zone Algorithms &amp; 2D QR PDF</small>
+          </div>
+        </button>
+
+        <button class="concept-tab-btn" data-tab="tab-security">
+          <span class="tab-num">05</span>
+          <div class="tab-label">
+            <strong>Security &amp; Auth Pipeline</strong>
+            <small>PBKDF2 &amp; Environment Isolation</small>
+          </div>
+        </button>
+
+        <div class="nav-tools-card">
+          <h4>Diagnostic Console</h4>
+          <p>Test live database latency and inspect real-time connection state.</p>
+          <button id="btn-run-diagnostics" class="btn btn-sm btn-outline-teal">⚡ Check Live DB Status</button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Tab Content Area -->
+    <section class="concepts-content">
+
+      <!-- ============================================================ -->
+      <!-- TAB 1: MONGODB EMBEDDED DOCUMENTS PATTERN -->
+      <!-- ============================================================ -->
+      <article id="tab-embedded-docs" class="concept-section active">
+        <div class="section-header">
+          <span class="section-tag">NoSQL Data Modeling</span>
+          <h2>MongoDB Embedded Document Pattern (Subdocuments)</h2>
+          <p class="lead-text">
+            In modern NoSQL database design, data that is accessed together should be stored together. Airvoyage implements the <strong>Embedded Document Pattern (Denormalized Subdocuments)</strong> to eliminate multi-table relational joins, ensure atomic single-document writes, and guarantee flight history immutability.
+          </p>
+        </div>
+
+        <div class="concept-grid-2">
+          <div class="info-card">
+            <h3>Why Embed Instead of Reference?</h3>
+            <ul class="concept-feature-list">
+              <li>
+                <strong>1-to-Few Bounded Cardinality:</strong> A single booking contains between 1 and 9 passengers. It will never grow unbounded, making it the textbook scenario for array embedding.
+              </li>
+              <li>
+                <strong>Zero JOIN Latency (O(1) Document Fetch):</strong> In SQL, fetching a booking with passengers requires querying two tables (<code>flights_booking</code> and <code>flights_passenger</code>) linked by foreign keys. In MongoDB, a single <code>findOne()</code> read fetches the booking and all passenger subdocuments in one disk seek.
+              </li>
+              <li>
+                <strong>Atomic Single-Document Transactions:</strong> Any updates to a booking and its passenger seats occur atomically within the single document boundary without requiring distributed 2-phase commits.
+              </li>
+              <li>
+                <strong>Snapshot Immutability:</strong> External flight APIs continuously update gate, terminal, and status. By embedding a frozen snapshot at booking time, passenger tickets remain immutable records for travel audits.
+              </li>
+            </ul>
+          </div>
+
+          <div class="info-card highlight-card">
+            <h3>Schema Comparison: Relational vs Embedded</h3>
+            <div class="comparison-metric-box">
+              <div class="metric-col">
+                <span class="metric-title">Relational (3NF SQL)</span>
+                <span class="metric-badge badge-warning">2 Tables &middot; Foreign Key</span>
+                <p>Requires <code>flights_passenger.booking_id</code> JOIN. Two roundtrips or multi-table lock.</p>
+              </div>
+              <div class="metric-divider">vs</div>
+              <div class="metric-col">
+                <span class="metric-title">MongoDB NoSQL</span>
+                <span class="metric-badge badge-success">1 Embedded Document</span>
+                <p>Self-contained BSON document with embedded <code>passengers: [...]</code> array and <code>route: {...}</code> object.</p>
+              </div>
+            </div>
+
+            <div class="perf-stats">
+              <div class="perf-stat">
+                <span class="stat-number">100%</span>
+                <span class="stat-label">Atomic Writes</span>
+              </div>
+              <div class="perf-stat">
+                <span class="stat-number">0</span>
+                <span class="stat-label">JOIN Overhead</span>
+              </div>
+              <div class="perf-stat">
+                <span class="stat-number">1</span>
+                <span class="stat-label">Single Roundtrip</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive JSON Schema Inspector -->
+        <div class="interactive-panel">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <span class="panel-icon">{ }</span>
+              <div>
+                <h3>Interactive MongoDB Embedded Document Schema Visualizer</h3>
+                <small>Inspect the live BSON/JSON structure generated by <code>Booking.to_embedded_document()</code></small>
+              </div>
+            </div>
+            <div class="panel-actions">
+              <button class="btn btn-sm btn-ghost-dark" id="btn-copy-schema">📋 Copy JSON</button>
+              <button class="btn btn-sm btn-teal" id="btn-refresh-schema">🔄 Reload Sample</button>
+            </div>
+          </div>
+          
+          <div class="schema-code-wrapper">
+            <pre><code id="schema-json-display" class="language-json">// Loading live MongoDB Embedded Document Schema...</code></pre>
+          </div>
+        </div>
+
+        <!-- Code Implementation Highlight -->
+        <div class="code-explain-card">
+          <h3>Implementation in Code: <code>flights/flask_models.py</code></h3>
+          <p>
+            When a booking is confirmed, the system creates embedded subdocuments for each passenger with unique ObjectIds and embeds both the route details and passenger array inside the primary booking document:
+          </p>
+          <div class="code-block">
+            <pre><code># 1. Construct embedded subdocuments for each passenger
+pax_embedded = [
+    {
+        "_id": ObjectId(),
+        "first_name": p["first_name"],
+        "last_name": p["last_name"],
+        "seat_number": p["seat_number"],
+        "boarding_zone": p["boarding_zone"],
+        "sequence_number": p["sequence_number"]
+    }
+    for p in passengers_data
+]
+
+# 2. Insert single denormalized document into MongoDB
+booking_doc = {
+    "_id": ObjectId(),
+    "reference": "AV-7F9B10",
+    "contact": {"email": contact_email, "phone": contact_phone},
+    "passengers": pax_embedded,  # <--- Embedded Document Array!
+    "route": {                  # <--- Embedded Route Subdocument!
+        "origin": {"iata": "DEL", "airport": "Delhi", "gate": "41A"},
+        "destination": {"iata": "BOM", "airport": "Mumbai"}
+    }
+}
+db.flights_booking.insert_one(booking_doc)</code></pre>
+          </div>
+        </div>
+      </article>
+
+      <!-- ============================================================ -->
+      <!-- TAB 2: DUAL-BACKEND HYBRID DATABASE -->
+      <!-- ============================================================ -->
+      <article id="tab-dual-db" class="concept-section">
+        <div class="section-header">
+          <span class="section-tag">Hybrid Database Architecture</span>
+          <h2>Dual-Backend Hybrid Engine: MongoDB Atlas + SQLite Fallback</h2>
+          <p class="lead-text">
+            Airvoyage is built with industrial resilience. It utilizes a <strong>Polyglot Database Abstraction Layer</strong> that automatically detects cloud MongoDB Atlas availability while providing transparent, instant fallback to persistent SQLite (<code>db.sqlite3</code>).
+          </p>
+        </div>
+
+        <div class="concept-grid-2">
+          <div class="info-card">
+            <h3>Automated Resilience Pipeline</h3>
+            <ol class="concept-steps-list">
+              <li>
+                <strong>Startup Probing:</strong> The application executes a fast non-blocking <code>ping</code> command against MongoDB Atlas with a strict 5000ms timeout.
+              </li>
+              <li>
+                <strong>IPv4 DNS Resilience &amp; TLS 80 Handshake Protection:</strong> Atlas clusters do not support IPv6/NAT64. The service patches Python's <code>socket.getaddrinfo</code> to prefer IPv4 and configures DNS resolvers (8.8.8.8) to prevent Windows DNS resolution errors.
+              </li>
+              <li>
+                <strong>Transparent Switchover:</strong> If Atlas is offline or the client IP is not yet whitelisted (TLS Alert 80), all operations transparently route to the persistent SQLite relational database without dropping user requests.
+              </li>
+              <li>
+                <strong>Data Layer Compatibility:</strong> The <code>User</code>, <code>Booking</code>, and <code>Passenger</code> adapters normalize dictionary keys across both BSON (<code>_id</code>) and SQLite (<code>id</code>), providing 100% template consistency.
+              </li>
+            </ol>
+          </div>
+
+          <div class="info-card">
+            <h3>Live Diagnostic Monitor</h3>
+            <div id="diagnostic-results-box" class="diag-box">
+              <div class="diag-item">
+                <span class="diag-label">Atlas Cloud Connection:</span>
+                <span id="diag-mongo-status" class="diag-val">{% if mongo_status.connected %}🟢 Connected{% else %}🟡 Fallback to SQLite Active{% endif %}</span>
+              </div>
+              <div class="diag-item">
+                <span class="diag-label">Current Active Engine:</span>
+                <span id="diag-active-engine" class="diag-val">{% if mongo_status.connected %}MongoDB Atlas (NoSQL){% else %}SQLite (Relational db.sqlite3){% endif %}</span>
+              </div>
+              <div class="diag-item">
+                <span class="diag-label">Active Database Name:</span>
+                <span id="diag-db-name" class="diag-val">{{ mongo_status.database }}</span>
+              </div>
+              <div class="diag-item">
+                <span class="diag-label">Collections Detected:</span>
+                <span id="diag-collections" class="diag-val">
+                  {% if mongo_status.collections %}
+                    {{ mongo_status.collections|join(', ') }}
+                  {% else %}
+                    SQLite Tables Active (auth_user, flights_booking, flights_passenger)
+                  {% endif %}
+                </span>
+              </div>
+              {% if mongo_status.diagnosis %}
+              <div class="diag-alert">
+                <strong>Atlas Notice:</strong>
+                <pre>{{ mongo_status.diagnosis }}</pre>
+              </div>
+              {% endif %}
+            </div>
+            <button class="btn btn-sm btn-teal mt-3" id="btn-retest-connection">Retest Atlas Connection Now</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- ============================================================ -->
+      <!-- TAB 3: REAL-TIME FLIGHT API & CACHING -->
+      <!-- ============================================================ -->
+      <article id="tab-live-api" class="concept-section">
+        <div class="section-header">
+          <span class="section-tag">API Integration &amp; Caching</span>
+          <h2>Real-Time Flight Pipeline &amp; In-Memory Sliding-Window Cache</h2>
+          <p class="lead-text">
+            Airvoyage connects to real-world flight scheduling networks using the <strong>Abstract Provider Pattern</strong> with an intelligent in-memory TTL caching tier to optimize free-quota API limits.
+          </p>
+        </div>
+
+        <div class="concept-grid-3">
+          <div class="concept-card">
+            <div class="card-icon">🔌</div>
+            <h3>Provider Pattern</h3>
+            <p>
+              The <code>FlightProvider</code> base class in <code>flights/services/base.py</code> enforces a standard contract: <code>search()</code> and <code>details()</code> returning normalized <code>Flight</code> dictionaries.
+            </p>
+            <span class="chip-tag">Ixigo &middot; AeroDataBox &middot; Aviationstack</span>
+          </div>
+
+          <div class="concept-card">
+            <div class="card-icon">⚡</div>
+            <h3>30-Second TTL Cache</h3>
+            <p>
+              Real flight search queries are cached in memory for 30 seconds. Repeat searches by travelers on the same route load instantaneously without exhausting monthly API limits.
+            </p>
+            <span class="chip-tag">Sliding Window &middot; In-Memory</span>
+          </div>
+
+          <div class="concept-card">
+            <div class="card-icon">👁️</div>
+            <h3>Page Visibility Polling</h3>
+            <p>
+              Client-side auto-refresh utilizes the HTML5 <strong>Page Visibility API</strong>. Polling is suspended automatically when the tab is hidden or minimized, conserving CPU and network bandwidth.
+            </p>
+            <span class="chip-tag">document.hidden &middot; 60s Polling</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- ============================================================ -->
+      <!-- TAB 4: SEAT MATRIX & BOARDING PASSES -->
+      <!-- ============================================================ -->
+      <article id="tab-boarding" class="concept-section">
+        <div class="section-header">
+          <span class="section-tag">Algorithmic Travel Tech</span>
+          <h2>Cabin Matrix Layout &amp; 2D QR Boarding Pass Engine</h2>
+          <p class="lead-text">
+            A full-stack implementation of airline seating ergonomics and digital boarding pass generation compliant with IATA barcoding principles.
+          </p>
+        </div>
+
+        <div class="concept-grid-2">
+          <div class="info-card">
+            <h3>Algorithmic Boarding Zones</h3>
+            <p>Passengers are assigned sequential boarding zones based on seat location heuristics:</p>
+            <ul class="zone-list">
+              <li><span class="zone-badge zone-1">Zone 1</span> <strong>First &amp; Business Class:</strong> Priority boarding at the front of the aircraft.</li>
+              <li><span class="zone-badge zone-2">Zone 2</span> <strong>Premium Economy &amp; Rear Window Seats:</strong> Early boarding to prevent aisle congestion.</li>
+              <li><span class="zone-badge zone-3">Zone 3</span> <strong>Mid-Cabin Window &amp; Middle Seats:</strong> Efficient progressive boarding.</li>
+              <li><span class="zone-badge zone-4">Zone 4</span> <strong>Aisle Seats &amp; Forward Cabin:</strong> Final general boarding call.</li>
+            </ul>
+          </div>
+
+          <div class="info-card">
+            <h3>Digital Vector Boarding Pass PDF</h3>
+            <p>
+              Generated on the fly using Python's <strong>ReportLab</strong> graphics library:
+            </p>
+            <ul class="concept-feature-list">
+              <li>
+                <strong>2D QR Code Generation:</strong> Dynamically encoded with passenger PNR, flight reference, date, and security checksum via <code>generate_qr_data_uri</code>.
+              </li>
+              <li>
+                <strong>High-Resolution Vector Graphics:</strong> Scalable vector geometry for airline logos, barcode striping, and tear-off stub layout.
+              </li>
+              <li>
+                <strong>Zero Storage Footprint:</strong> Generated in-memory via <code>io.BytesIO</code> streams and piped directly to the client browser as a downloadable PDF.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+      <!-- ============================================================ -->
+      <!-- TAB 5: SECURITY & AUTHENTICATION -->
+      <!-- ============================================================ -->
+      <article id="tab-security" class="concept-section">
+        <div class="section-header">
+          <span class="section-tag">Security Architecture</span>
+          <h2>Security Architecture &amp; Cross-Framework Password Hashing</h2>
+          <p class="lead-text">
+            Enterprise security controls ensuring safe user authentication across dual backends and strictly isolating third-party credentials.
+          </p>
+        </div>
+
+        <div class="concept-grid-3">
+          <div class="concept-card">
+            <div class="card-icon">🔒</div>
+            <h3>Dual Password Verification</h3>
+            <p>
+              Supports verification across both <strong>Django PBKDF2 SHA-256</strong> hashes and <strong>Werkzeug Scrypt</strong> hashes, allowing seamless user logins across Flask and Django environments.
+            </p>
+          </div>
+
+          <div class="concept-card">
+            <div class="card-icon">🛡️</div>
+            <h3>Credential Isolation</h3>
+            <p>
+              Sensitive API keys (RapidAPI, MongoDB Atlas URIs) reside strictly in server-side <code>.env</code> files and are never passed to HTML templates or client-side JavaScript.
+            </p>
+          </div>
+
+          <div class="concept-card">
+            <div class="card-icon">🔑</div>
+            <h3>Session Integrity &amp; CSRF</h3>
+            <p>
+              Cryptographically signed session cookies with <code>HttpOnly</code> flags and CSRF token protection on all state-altering POST routes.
+            </p>
+          </div>
+        </div>
+      </article>
+
+    </section>
+  </div>
+</main>
+
+<script>
+  // Tab Switching Logic
+  document.querySelectorAll(".concept-tab-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      document.querySelectorAll(".concept-tab-btn").forEach(function (b) { b.classList.remove("active"); });
+      document.querySelectorAll(".concept-section").forEach(function (sec) { sec.classList.remove("active"); });
+
+      btn.classList.add("active");
+      var targetId = btn.getAttribute("data-tab");
+      var targetSection = document.getElementById(targetId);
+      if (targetSection) {
+        targetSection.classList.add("active");
+      }
+    });
+  });
+
+  // Fetch Live MongoDB Embedded Schema Sample
+  function loadSchemaSample() {
+    var display = document.getElementById("schema-json-display");
+    if (!display) return;
+    display.textContent = "// Fetching live MongoDB Embedded Document schema...";
+
+    fetch("/api/concepts/mongodb-schema")
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (data.embedded_document) {
+          display.textContent = JSON.stringify(data.embedded_document, null, 2);
+        } else {
+          display.textContent = JSON.stringify(data, null, 2);
+        }
+      })
+      .catch(function (err) {
+        display.textContent = "// Error loading live schema: " + err;
+      });
+  }
+
+  var btnRefresh = document.getElementById("btn-refresh-schema");
+  if (btnRefresh) {
+    btnRefresh.addEventListener("click", loadSchemaSample);
+  }
+
+  var btnCopy = document.getElementById("btn-copy-schema");
+  if (btnCopy) {
+    btnCopy.addEventListener("click", function () {
+      var display = document.getElementById("schema-json-display");
+      if (display) {
+        navigator.clipboard.writeText(display.textContent).then(function () {
+          btnCopy.textContent = "✅ Copied!";
+          setTimeout(function () { btnCopy.textContent = "📋 Copy JSON"; }, 2000);
+        });
+      }
+    });
+  }
+
+  // Diagnostics check button
+  function runDiagnostics() {
+    var btn = document.getElementById("btn-run-diagnostics");
+    var retestBtn = document.getElementById("btn-retest-connection");
+    if (btn) btn.textContent = "Checking...";
+    if (retestBtn) retestBtn.textContent = "Testing...";
+
+    fetch("/api/concepts/system-status")
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        var statusEl = document.getElementById("diag-mongo-status");
+        var engineEl = document.getElementById("diag-active-engine");
+        var dbEl = document.getElementById("diag-db-name");
+        var collEl = document.getElementById("diag-collections");
+
+        if (statusEl) {
+          statusEl.textContent = data.database.mongo_connected ? "🟢 Connected to MongoDB Atlas" : "🟡 SQLite Fallback Mode Active";
+        }
+        if (engineEl) {
+          engineEl.textContent = data.database.engine_in_use;
+        }
+        if (dbEl && data.database.details) {
+          dbEl.textContent = data.database.details.database || "flight_portal";
+        }
+        if (collEl && data.database.details && data.database.details.collections) {
+          collEl.textContent = data.database.details.collections.length > 0 
+            ? data.database.details.collections.join(", ") 
+            : "SQLite Tables: auth_user, flights_booking, flights_passenger";
+        }
+        if (btn) btn.textContent = "⚡ Checked Just Now";
+        if (retestBtn) retestBtn.textContent = "Retest Atlas Connection Now";
+      })
+      .catch(function (err) {
+        if (btn) btn.textContent = "Check Failed";
+        if (retestBtn) retestBtn.textContent = "Retest Failed";
+      });
+  }
+
+  var btnDiag = document.getElementById("btn-run-diagnostics");
+  if (btnDiag) btnDiag.addEventListener("click", runDiagnostics);
+
+  var btnRetest = document.getElementById("btn-retest-connection");
+  if (btnRetest) btnRetest.addEventListener("click", runDiagnostics);
+
+  // Initial load
+  loadSchemaSample();
+</script>
+{% endblock %}

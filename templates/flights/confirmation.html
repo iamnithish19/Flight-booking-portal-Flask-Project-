@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Booking {{ booking.reference }}{% endblock %}
+{% block body_class %}theme-dark{% endblock %}
+{% block content %}
+<main class="dark-layout">
+  <div class="dark-form">
+    {% if booking.booking_status == 'cancelled' %}
+      <p class="err" style="color: #ef4444; font-weight: 700; font-size: 1.1rem;">🚫 Ticket Cancelled</p>
+      <h2>Reference {{ booking.reference }}</h2>
+      <div class="cancellation-alert-banner" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 8px; padding: 14px 18px; margin: 16px 0; color: #fca5a5;">
+        <strong style="display: block; font-size: 15px; color: #f87171; margin-bottom: 4px;">🚫 Booking Has Been Cancelled</strong>
+        <span>100% full refund initiated to original payment method under Regular Member zero-cancellation protection.</span>
+      </div>
+    {% else %}
+      <p class="ok">Booking confirmed</p>
+      <h2>Reference {{ booking.reference }}</h2>
+    {% endif %}
+    <p>{{ booking.airline_name }} {{ booking.flight_number }} · {{ booking.dep_airport|default(booking.dep_iata) }} → {{ booking.arr_airport|default(booking.arr_iata) }}</p>
+
+    {% if booking.snapshot.concession_badge %}
+    <div class="concession-alert-banner"
+      style="background: rgba(14, 165, 233, 0.15); border: 1px solid rgba(14, 165, 233, 0.4); border-radius: 8px; padding: 12px 16px; margin: 16px 0; display: flex; align-items: center; gap: 12px;">
+      <span style="font-size: 22px;">🎫</span>
+      <div style="font-size: 13.5px; color: #bae6fd;">
+        <strong style="color: #38bdf8; display: block; font-size: 14px;">{{ booking.snapshot.concession_badge }} Applied</strong>
+        <span>{{ booking.snapshot.doc_required|default("Please ensure all eligible passengers carry valid verification documents at the airport check-in counter.") }}</span>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if cancellation_policy and booking.booking_status == 'confirmed' %}
+    <div class="dgca-cancellation-card" style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9)); border: 1px solid {% if cancellation_policy.dgca_eligible %}rgba(56, 189, 248, 0.5){% else %}rgba(148, 163, 184, 0.3){% endif %}; border-radius: 12px; padding: 16px 20px; margin: 18px 0; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);">
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 20px;">🏛️</span>
+          <div>
+            <strong style="color: #f1f5f9; font-size: 14.5px;">DGCA 2026 Free Cancellation Guarantee</strong>
+            <span style="display: block; font-size: 11.5px; color: #94a3b8;">Effective March 26, 2026 (Passenger Charter Regulation)</span>
+          </div>
+        </div>
+        {% if cancellation_policy.dgca_eligible %}
+          <span style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 999px; padding: 4px 12px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background: #34d399; display: inline-block;"></span>
+            48h Free Look-In Window Active ({{ cancellation_policy.hours_remaining_48h }}h left)
+          </span>
+        {% else %}
+          <span style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 999px; padding: 4px 12px; font-size: 12px; font-weight: 700;">
+            Covered Under Member Protection
+          </span>
+        {% endif %}
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; font-size: 12.5px; color: #cbd5e1; background: rgba(0, 0, 0, 0.25); padding: 10px 14px; border-radius: 8px; margin-top: 8px;">
+        <div>
+          <span style="color: #94a3b8; display: block; font-size: 11px;">Flight Category</span>
+          <strong>{{ cancellation_policy.flight_category }} (Min {{ cancellation_policy.required_lead_days }}d lead)</strong>
+        </div>
+        <div>
+          <span style="color: #94a3b8; display: block; font-size: 11px;">Booking Lead Time</span>
+          <strong style="color: {% if cancellation_policy.meets_lead_time %}#34d399{% else %}#fbbf24{% endif %};">{{ cancellation_policy.actual_lead_days }} days ahead</strong>
+        </div>
+        <div>
+          <span style="color: #94a3b8; display: block; font-size: 11px;">Cancellation Fee</span>
+          <strong style="color: #38bdf8;">₹0 (100% Full Refund Guarantee)</strong>
+        </div>
+        <div>
+          <span style="color: #94a3b8; display: block; font-size: 11px;">Amendment / Changes</span>
+          <span style="color: #34d399;">Free within 48h Window</span>
+        </div>
+      </div>
+      <p style="margin: 10px 0 0 0; font-size: 12px; color: #94a3b8; line-height: 1.4;">
+        {{ cancellation_policy.reason }}
+      </p>
+    </div>
+    {% endif %}
+
+    <ul class="plist">
+      {% for p in booking.passengers %}
+      <li style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0;">
+        <span>{{ p.first_name }} {{ p.last_name }}</span>
+        <span
+          style="background: rgba(45, 212, 191, 0.15); color: #2dd4bf; border: 1px solid rgba(45, 212, 191, 0.3); border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 700;">
+          Seat {{ p.seat_number|default("8A") }} · {{ p.boarding_zone|default("Zone 3") }}
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+
+    <div class="bp-quick-actions" style="display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap; align-items: center;">
+      {% if booking.booking_status == 'confirmed' %}
+      <a class="btn btn-teal" href="{{ url_for('boarding_pass_pdf', reference=booking.reference) }}" download>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          style="vertical-align: -2px; margin-right: 4px;">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        Download Boarding Pass (PDF)
+      </a>
+      <a class="btn btn-ghost-dark" href="{{ url_for('boarding_pass_view', reference=booking.reference) }}">
+        View Boarding Pass
+      </a>
+      <button type="button" class="btn btn-teal" onclick="openLiveFlightMapModal('{{ booking.flight_number }}', '{{ booking.dep_iata }}', '{{ booking.arr_iata }}', '{{ booking.dep_date|date }}', '{{ booking.travel_class|default("economy") }}')" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+        <span>🗺️</span> Live Google Map Tracker
+      </button>
+      <form method="post" action="{{ url_for('cancel_booking', reference=booking.reference) }}" onsubmit="return confirm('Are you sure you want to cancel ticket {{ booking.reference }}? 100% full refund with ₹0 fees will be initiated under DGCA 2026 regulations & Regular Member protection.');" style="display: inline-block; margin: 0;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-sm" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); color: #f87171; font-weight: 700; padding: 10px 18px; border-radius: 999px; cursor: pointer;">
+          🚫 Cancel Ticket
+        </button>
+      </form>
+      {% else %}
+      <span style="color: #f87171; font-weight: 700; padding: 8px 16px; background: rgba(239, 68, 68, 0.15); border-radius: 999px; border: 1px solid rgba(239, 68, 68, 0.4); font-size: 13px;">
+        Ticket Status: Cancelled (Full Refund Processed)
+      </span>
+      {% endif %}
+    </div>
+
+    <p class="fine">Flight details below were saved when you booked. For the latest live status, open the flight from My
+      bookings.</p>
+    <div class="fc-actions" style="margin-top: 15px;">
+      <a class="btn btn-mint" href="{{ url_for('my_bookings') }}">My bookings</a>
+      {% if return_qs %}<a class="btn btn-ghost-dark" href="{{ url_for('search') }}?{{ return_qs }}">Search return
+        flights</a>{% endif %}
+    </div>
+  </div>
+  <aside class="summary">
+    <h3>Saved flight details</h3>
+    <div class="sum-route"><b>{{ booking.dep_iata }}</b><span>→</span><b>{{ booking.arr_iata }}</b></div>
+    <dl>
+      <dt>Date</dt>
+      <dd>{{ booking.dep_date|date("d M Y") }}</dd>
+      <dt>Scheduled departure</dt>
+      <dd>{{ booking.scheduled_departure|isotime }}</dd>
+      <dt>Scheduled arrival</dt>
+      <dd>{{ booking.scheduled_arrival|isotime }}</dd>
+      <dt>Terminal / gate</dt>
+      <dd>{{ booking.dep_terminal|default("—") }} / {{ booking.dep_gate|default("—") }}</dd>
+      <dt>Aircraft</dt>
+      <dd>{{ booking.aircraft|default("—") }}</dd>
+      <dt>Status when booked</dt>
+      <dd>{{ booking.status_at_booking|status_label }}</dd>
+    </dl>
+  </aside>
+</main>
+{% endblock %}

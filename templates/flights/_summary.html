@@ -1,0 +1,22 @@
+<aside class="summary">
+  <h3>Booking summary</h3>
+  <div class="sum-route"><b>{{ flight.dep_iata }}</b><span>→</span><b>{{ flight.arr_iata }}</b></div>
+  <dl><dt>Flight</dt><dd>{{ flight.flight_number }}</dd>
+  <dt>Airline</dt><dd>{{ flight.airline_name|default("—") }}</dd>
+  <dt>Date</dt><dd>{{ flight.dep_date|isodate }}</dd>
+  <dt>Departs</dt><dd>{{ flight.scheduled_departure|isotime }}</dd>
+  <dt>Arrives</dt><dd>{{ flight.scheduled_arrival|isotime }}</dd>
+  <dt>Terminal / gate</dt><dd>{{ flight.dep_terminal|default("—") }} / {{ flight.dep_gate|default("—") }}</dd>
+  <dt>Passengers</dt><dd>{{ pax }}</dd>
+  {% if flight.price %}
+  <dt>Total Fare</dt><dd><b>₹{{ flight.price|inr_format }}</b>{% if flight.concession_savings %} <small style="color: #10b981; font-weight: 700;">(Saved ₹{{ flight.concession_savings|inr_format }})</small>{% endif %}</dd>
+  {% endif %}
+  {% if flight.concession_badge %}
+  <dt>Fare Type</dt><dd><span style="color: #38bdf8; font-weight: 600;">{{ flight.concession_name }}</span></dd>
+  {% endif %}
+  <dt>Baggage</dt><dd>{{ flight.baggage|default("15 kg Check-in · 7 kg Cabin") }}</dd></dl>
+  <span class="badge {{ flight.status|status_class }}">{{ flight.status|status_label }}</span>
+  {% if not flight.price %}
+  <p class="fine">Fares aren't provided by flight-status data, so no price is shown.</p>
+  {% endif %}
+</aside>

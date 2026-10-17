@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block body_class %}page-home{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="sky" aria-hidden="true"></div>
+  <div class="hero-inner">
+    <div class="hero-badge"><span class="radar-ping"></span> Real-Time Flight Data Live</div>
+    <h1>Book Flights with Live Status</h1>
+    <p>Real-time airport departures, live flight tracker, terminal &amp; gate updates, and instant bookings.</p>
+    {% include "flights/_search_form.html" %}
+
+    <!-- Popular Routes Ixigo Style -->
+    <div class="popular-routes">
+      <span class="pr-label">Trending Routes:</span>
+      <div class="pr-chips">
+        <a href="{% url 'search' %}?source=Chennai%20(MAA)&destination=Delhi%20(DEL)&departure_date={{ today|date:'Y-m-d' }}&passengers=1" class="pr-chip">
+          <span>Chennai → Delhi</span> <small>from ₹5,450</small>
+        </a>
+        <a href="{% url 'search' %}?source=Mumbai%20(BOM)&destination=Delhi%20(DEL)&departure_date={{ today|date:'Y-m-d' }}&passengers=1" class="pr-chip">
+          <span>Mumbai → Delhi</span> <small>from ₹4,890</small>
+        </a>
+        <a href="{% url 'search' %}?source=Bengaluru%20(BLR)&destination=Delhi%20(DEL)&departure_date={{ today|date:'Y-m-d' }}&passengers=1" class="pr-chip">
+          <span>Bengaluru → Delhi</span> <small>from ₹5,200</small>
+        </a>
+        <a href="{% url 'search' %}?source=Delhi%20(DEL)&destination=Goa%20(GOI)&departure_date={{ today|date:'Y-m-d' }}&passengers=1" class="pr-chip">
+          <span>Delhi → Goa</span> <small>from ₹4,299</small>
+        </a>
+        <a href="{% url 'search' %}?source=Mumbai%20(BOM)&destination=Bengaluru%20(BLR)&departure_date={{ today|date:'Y-m-d' }}&passengers=1" class="pr-chip">
+          <span>Mumbai → Bengaluru</span> <small>from ₹3,850</small>
+        </a>
+        <a href="{% url 'search' %}?source=Delhi%20(DEL)&destination=Dubai%20(DXB)&departure_date={{ today|date:'Y-m-d' }}&passengers=1" class="pr-chip">
+          <span>Delhi → Dubai</span> <small>from ₹12,990</small>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="strip">
+  <div class="strip-card">
+    <div class="strip-icon">📡</div>
+    <strong>Live Real-Time Status</strong>
+    <span>Boarding, in-flight cruising, taxiing, delays, and touchdowns tracked continuously against the real clock.</span>
+  </div>
+  <div class="strip-card">
+    <div class="strip-icon">🏢</div>
+    <strong>Terminals &amp; Gates</strong>
+    <span>Accurate terminal numbers and gate assignments for Delhi, Mumbai, Chennai, Bengaluru, and 35+ airports.</span>
+  </div>
+  <div class="strip-card">
+    <div class="strip-icon">🏷️</div>
+    <strong>Ixigo-Matched Fares</strong>
+    <span>Zero hidden charges, transparent taxes, and real-time seat availability across IndiGo, Air India, Akasa &amp; more.</span>
+  </div>
+  <div class="strip-card">
+    <div class="strip-icon">🛡️</div>
+    <strong>Instant Confirmed Tickets</strong>
+    <span>Full passenger management with immediate PNR generation and flight snapshot storage.</span>
+  </div>
+</section>
+{% endblock %}

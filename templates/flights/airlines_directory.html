@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}Airlines Operating in India · Operational Scope &amp; Dividance{% endblock %}
+{% block body_class %}page-airlines{% endblock %}
+{% block content %}
+<section class="mini-hero">
+  <div class="sky sky-sm" aria-hidden="true"></div>
+  <div class="hero-inner" style="max-width: 1100px; margin: 0 auto; text-align: center; padding: 30px 20px 20px;">
+    <div class="hero-badge"><span class="radar-ping"></span> Indian Civil Aviation Framework</div>
+    <h1 style="font-size: 2.2rem; color: #ffffff; margin: 10px 0 12px; font-weight: 800;">Airlines Operating in India: Operational Scope &amp; Dividance</h1>
+    <p style="color: #cbd5e1; max-width: 820px; margin: 0 auto 20px; font-size: 1.05rem; line-height: 1.6;">
+      Civil aviation in India is categorized into three distinct operational models governed by the DGCA:
+      <strong>Domestic Only</strong> (regional &amp; UDAN carriers), <strong>Both Domestic &amp; Overseas</strong> (Indian mainline carriers),
+      and <strong>Foreign Carriers</strong> (strictly international under Indian cabotage laws).
+    </p>
+
+    <!-- Quick Jump Tabs -->
+    <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
+      <a href="#cat-domestic-only" class="btn btn-ghost btn-sm" style="background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.25);">1. Domestic Regional Only</a>
+      <a href="#cat-mainline" class="btn btn-ghost btn-sm" style="background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.25);">2. Domestic &amp; International</a>
+      <a href="#cat-foreign" class="btn btn-ghost btn-sm" style="background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.25);">3. Foreign Carriers (Cabotage)</a>
+    </div>
+  </div>
+</section>
+
+<!-- Cabotage Notice Banner -->
+<div style="max-width: 1180px; margin: -20px auto 30px; padding: 0 20px; position: relative; z-index: 10;">
+  <div style="background: #ffffff; border-radius: 14px; padding: 20px 24px; border: 1px solid var(--line); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.06); display: flex; align-items: flex-start; gap: 16px;">
+    <div style="font-size: 2rem; line-height: 1; flex-shrink: 0;">⚖️</div>
+    <div>
+      <h3 style="margin: 0 0 6px; font-size: 1.05rem; color: #0f172a; font-weight: 700;">Indian Aviation Cabotage Regulation (DGCA Law)</h3>
+      <p style="margin: 0; font-size: .88rem; color: #475569; line-height: 1.55;">
+        Under Indian civil aviation regulations and international bilateral air service agreements (<em>Cabotage Laws</em>),
+        <strong>foreign airlines are strictly prohibited from carrying passengers between any two domestic Indian airports</strong>.
+        Foreign carriers may only operate flights connecting international origin/destination airports to recognized Indian international gateways (or vice versa).
+        Only Indian-registered air carriers (Categories 1 &amp; 2) are licensed to operate point-to-point flights within India.
+      </p>
+    </div>
+  </div>
+</div>
+
+<main style="max-width: 1180px; margin: 0 auto 60px; padding: 0 20px;">
+
+  <!-- ========================================================================= -->
+  <!-- CATEGORY 1: AIRLINES OPERATING ONLY DOMESTIC FLIGHTS IN INDIA -->
+  <!-- ========================================================================= -->
+  <section id="cat-domestic-only" style="margin-bottom: 50px;">
+    <div style="border-bottom: 2px solid #0284c7; padding-bottom: 12px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <span class="scope-badge scope-regional" style="font-size: .78rem; padding: 4px 10px;">Category 1 · Domestic Only</span>
+        <h2 style="font-size: 1.65rem; color: #0f172a; margin: 8px 0 4px; font-weight: 800;">Airlines Operating Only Domestic Flights in India</h2>
+        <p style="color: #64748b; margin: 0; font-size: .92rem;">
+          Indian regional and commuter scheduled carriers that strictly connect cities and towns within India (mostly under the UDAN regional connectivity scheme).
+        </p>
+      </div>
+      <span style="font-size: .85rem; font-weight: 700; color: #0369a1; background: #f0f9ff; padding: 6px 12px; border-radius: 8px;">{{ domestic_only|length }} Regional Carriers</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 20px;">
+      {% for a in domestic_only %}
+      <div style="background: #ffffff; border-radius: 12px; border: 1px solid var(--line); padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span class="airline-logo logo-{{ a.iata|lower }}" style="width: 44px; height: 44px; font-size: 1.05rem;">{{ a.iata }}</span>
+              <div>
+                <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: #0f172a;">{{ a.name }}</h3>
+                <span style="font-size: .78rem; color: #64748b;">IATA: <strong>{{ a.iata }}</strong> · Hub: <strong>{{ a.hub }}</strong></span>
+              </div>
+            </div>
+            <span style="font-size: .70rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; background: #f1f5f9; color: #475569;">{{ a.tag }}</span>
+          </div>
+
+          <p style="font-size: .86rem; color: #475569; line-height: 1.5; margin-bottom: 14px;">{{ a.description }}</p>
+
+          <div style="background: #f8fafc; border-radius: 8px; padding: 12px; font-size: .80rem; color: #334155; margin-bottom: 14px;">
+            <div style="margin-bottom: 6px;"><strong>✈ Fleet Aircraft:</strong> {{ a.aircraft|join(", ") }}</div>
+            <div style="margin-bottom: 6px;"><strong>🧳 Baggage:</strong> {{ a.baggage }}</div>
+            <div><strong>🍽️ Catering:</strong> {{ a.meal }}</div>
+          </div>
+        </div>
+
+        <a href="{{ url_for('search') }}?source=Delhi%20(DEL)&destination=Dehradun%20(DED)&departure_date={{ today|date('Y-m-d') }}&passengers=1" class="btn btn-ghost btn-sm" style="text-align: center; width: 100%; border-color: #cbd5e1; font-weight: 600;">
+          Find Flights on {{ a.name }}
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- CATEGORY 2: AIRLINES OPERATING BOTH DOMESTIC AND INTERNATIONAL FLIGHTS -->
+  <!-- ========================================================================= -->
+  <section id="cat-mainline" style="margin-bottom: 50px;">
+    <div style="border-bottom: 2px solid #16a34a; padding-bottom: 12px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <span class="scope-badge scope-mainline" style="font-size: .78rem; padding: 4px 10px;">Category 2 · Domestic &amp; Overseas</span>
+        <h2 style="font-size: 1.65rem; color: #0f172a; margin: 8px 0 4px; font-weight: 800;">Airlines Operating Both Domestic &amp; International Flights</h2>
+        <p style="color: #64748b; margin: 0; font-size: .92rem;">
+          Indian-flagged scheduled mainline carriers that operate broad domestic networks as well as international services from India.
+        </p>
+      </div>
+      <span style="font-size: .85rem; font-weight: 700; color: #15803d; background: #f0fdf4; padding: 6px 12px; border-radius: 8px;">{{ both_domestic_intl|length }} Mainline Carriers</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px;">
+      {% for a in both_domestic_intl %}
+      <div style="background: #ffffff; border-radius: 12px; border: 1px solid var(--line); padding: 22px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span class="airline-logo logo-{{ a.iata|lower }}" style="width: 46px; height: 46px; font-size: 1.1rem;">{{ a.iata }}</span>
+              <div>
+                <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: #0f172a;">{{ a.name }}</h3>
+                <span style="font-size: .78rem; color: #64748b;">IATA: <strong>{{ a.iata }}</strong> · Flag Carrier: <strong>{{ a.country }}</strong></span>
+              </div>
+            </div>
+            <span class="scope-badge scope-mainline">{{ a.tag }}</span>
+          </div>
+
+          <p style="font-size: .88rem; color: #475569; line-height: 1.55; margin-bottom: 14px;">{{ a.description }}</p>
+
+          <div style="background: #f8fafc; border-radius: 8px; padding: 14px; font-size: .82rem; color: #334155; margin-bottom: 16px;">
+            <div style="margin-bottom: 6px;"><strong>✈ Modern Fleet:</strong> {{ a.aircraft|join(", ") }}</div>
+            <div style="margin-bottom: 6px;"><strong>🧳 Standard Baggage:</strong> {{ a.baggage }}</div>
+            <div><strong>🍽️ Dining Standard:</strong> {{ a.meal }}</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <a href="{{ url_for('search') }}?source=Delhi%20(DEL)&destination=Mumbai%20(BOM)&departure_date={{ today|date('Y-m-d') }}&passengers=1" class="btn btn-ghost btn-sm" style="flex: 1; text-align: center; border-color: #cbd5e1; font-weight: 600;">
+            Domestic
+          </a>
+          <a href="{{ url_for('search') }}?source=Delhi%20(DEL)&destination=Dubai%20(DXB)&departure_date={{ today|date('Y-m-d') }}&passengers=1" class="btn btn-orange btn-sm" style="flex: 1; text-align: center; font-weight: 600;">
+            International
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- CATEGORY 3: FOREIGN CARRIERS (INTERNATIONAL ONLY - CABOTAGE LAWS) -->
+  <!-- ========================================================================= -->
+  <section id="cat-foreign" style="margin-bottom: 50px;">
+    <div style="border-bottom: 2px solid #db2777; padding-bottom: 12px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <span class="scope-badge scope-foreign" style="font-size: .78rem; padding: 4px 10px;">Category 3 · International Only</span>
+        <h2 style="font-size: 1.65rem; color: #0f172a; margin: 8px 0 4px; font-weight: 800;">Airlines Operating Only Abroad / Into India (Foreign Carriers)</h2>
+        <p style="color: #64748b; margin: 0; font-size: .92rem;">
+          Under Indian cabotage regulations, foreign airlines are <strong>not permitted to operate domestic flights between two Indian cities</strong>.
+          They exclusively connect overseas hubs to Indian international gateways.
+        </p>
+      </div>
+    </div>
+
+    <!-- Grouped by Region -->
+    {% for region, airlines in foreign_by_region.items() %}
+    <div style="margin-bottom: 35px;">
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+        <h3 style="margin: 0; font-size: 1.25rem; color: #1e293b; font-weight: 800;">🌍 {{ region }}</h3>
+        <span style="font-size: .75rem; font-weight: 700; color: #9d174d; background: #fce7f3; padding: 3px 8px; border-radius: 6px;">{{ airlines|length }} Airlines</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px;">
+        {% for a in airlines %}
+        <div style="background: #ffffff; border-radius: 12px; border: 1px solid var(--line); padding: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="airline-logo logo-{{ a.iata|lower }}" style="width: 40px; height: 40px; font-size: .95rem;">{{ a.iata }}</span>
+                <div>
+                  <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #0f172a;">{{ a.name }}</h4>
+                  <span style="font-size: .75rem; color: #64748b;">{{ a.country }} · Hub: <strong>{{ a.hub }}</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <p style="font-size: .83rem; color: #475569; line-height: 1.45; margin-bottom: 12px;">{{ a.description }}</p>
+
+            <div style="background: #f8fafc; border-radius: 6px; padding: 10px; font-size: .76rem; color: #334155; margin-bottom: 14px;">
+              <div style="margin-bottom: 4px;"><strong>✈ Aircraft:</strong> {{ a.aircraft|join(", ") }}</div>
+              <div style="margin-bottom: 4px;"><strong>🧳 Baggage:</strong> {{ a.baggage }}</div>
+              <div><strong>🍽️ Dining:</strong> {{ a.meal }}</div>
+            </div>
+          </div>
+
+          <a href="{{ url_for('search') }}?source=Delhi%20(DEL)&destination={{ a.hub }}&departure_date={{ today|date('Y-m-d') }}&passengers=1" class="btn btn-ghost btn-sm" style="text-align: center; border-color: #cbd5e1; font-weight: 600; font-size: .80rem;">
+            Explore Flights to {{ a.hub }}
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+
+  </section>
+
+  <!-- Flight Search Banner -->
+  <section style="background: linear-gradient(135deg, #0f172a, #1e293b); border-radius: 16px; padding: 35px 30px; color: #ffffff; text-align: center;">
+    <h3 style="font-size: 1.6rem; font-weight: 800; margin: 0 0 10px;">Ready to Search Flights Across All Indian &amp; Global Carriers?</h3>
+    <p style="color: #94a3b8; max-width: 650px; margin: 0 auto 20px; font-size: .95rem;">
+      Experience real-time flight tracking, dynamic fare ribbons, terminal and gate allocations, and instant booking confirmations.
+    </p>
+    <a href="{{ url_for('home') }}" class="btn btn-orange" style="font-size: 1rem; padding: 10px 24px;">Start Flight Search →</a>
+  </section>
+
+</main>
+{% endblock %}
