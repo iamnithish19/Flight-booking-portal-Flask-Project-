@@ -9,3 +9,5 @@ reportlab>=4.0
 qrcode>=8.0
 pillow>=10.0
 Django>=6.1,<6.2
+gunicorn>=21.2.0
+certifi>=2024.0.0

@@ -1191,9 +1191,18 @@ def api_membership_all_members():
         "count": len(members),
         "members": members,
     })
+@app.route("/health")
+def health_check():
+    """Health check endpoint for cloud deployment platforms (Render, Railway, etc.)."""
+    return jsonify({
+        "status": "healthy",
+        "service": "Airvoyage Flight Portal",
+        "mongo_available": is_mongo_available(),
+    }), 200
 
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    print(f"Starting Airvoyage Flight Portal on http://127.0.0.1:{port}")
-    app.run(host="0.0.0.0", port=port, debug=True)
+    debug = os.environ.get("FLASK_DEBUG", "0").lower() in ("1", "true", "yes")
+    print(f"Starting Airvoyage Flight Portal on http://127.0.0.1:{port} (debug={debug})")
+    app.run(host="0.0.0.0", port=port, debug=debug)

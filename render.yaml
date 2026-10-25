@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: flight-booking-portal
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: USE_MONGODB
+        value: "1"
+      - key: MONGODB_NAME
+        value: flight_portal
+      - key: MONGODB_URI
+        sync: false
+      - key: FLIGHT_API_KEY
+        sync: false
+      - key: FLIGHT_API_PROVIDER
+        value: aerodatabox
+      - key: FLIGHT_API_AUTH_STYLE
+        value: rapidapi
+      - key: FLIGHT_AUTO_REFRESH_SECONDS
+        value: "60"
+      - key: FLIGHT_API_CACHE_SECONDS
+        value: "30"
